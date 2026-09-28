@@ -11,38 +11,37 @@ library(shiny)
 
 ui <- fluidPage(
   
-  titlePanel("Top 15 des ouvertures selon le niveau Elo"),
-  
-  selectInput(
-    inputId = "elo",
-    label = "Choisissez une tranche Elo :",
-    choices = elo_levels,
-    selected = "1500-1599"
-  ),
+  titlePanel("Les ouvertures les plus jouées selon le niveau Elo"),
   
   fluidRow(
     
     column(
-      width = 8,
+      width = 6,
       
-      plotlyOutput(
-        "top_openings",
-        height = "600px"
+      selectInput(
+        inputId = "elo",
+        label = "Tranche Elo :",
+        choices = elo_levels,
+        selected = "1500-1599"
       )
     ),
     
     column(
-      width = 4,
+      width = 6,
       
-      h3("Position à la fin de l'ouverture"),
-      
-      h4(textOutput("opening_name")),
-      
-      p(textOutput("opening_eco")),
-      
-      div(
-        id = "chessboard"
+      selectInput(
+        inputId = "nb_openings",
+        label = "Nombre d'ouvertures à afficher :",
+        choices = 1:20,
+        selected = 3
       )
     )
+  ),
+  
+  br(),
+  
+  plotlyOutput(
+    "top_openings",
+    height = "600px"
   )
 )
