@@ -64,4 +64,57 @@ server <- function(input, output, session) {
         )
       )
   })
+  
+  output$coups_elo <- renderPlotly({
+    
+    taille <- input$taille_elo
+    
+    donnees <- Donnees_Chess %>%
+      mutate(
+        diff_elo = abs(white_rating - black_rating),
+        categorie_elo = floor(diff_elo / taille) * taille
+      ) %>%
+      group_by(categorie_elo) %>%
+      summarise(
+        nombre_coups_moyen = mean(turns, na.rm = TRUE),
+        nombre_parties = n(),
+        .groups = "drop"
+      ) %>%
+      arrange(categorie_elo) %>%
+      mutate(
+        categorie = paste0(
+          categorie_elo,
+          "-",
+          categorie_elo + taille - 1
+        ),
+        categorie = factor(
+          categorie,
+          levels = categorie
+        )
+      )
+    
+    plot_ly(
+      data = donnees,
+      x = ~categorie,
+      y = ~nombre_coups_moyen,
+      type = "bar",
+      hovertemplate = paste0(
+        "<b>Écart Elo : %{x}</b><br>",
+        "Nombre moyen de coups : %{y:.1f}<br>",
+        "Nombre de parties : %{customdata}<br>",
+        "<extra></extra>"
+      ),
+      customdata = ~nombre_parties
+    ) %>%
+      layout(
+        xaxis = list(
+          title = "Différence de classement Elo"
+        ),
+        yaxis = list(
+          title = "Nombre moyen de coups"
+        )
+      )
+  })
 }
+
+

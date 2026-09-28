@@ -29,11 +29,13 @@ ui <- fluidPage(
     column(
       width = 6,
       
-      selectInput(
+      sliderInput(
         inputId = "nb_openings",
         label = "Nombre d'ouvertures à afficher :",
-        choices = 1:20,
-        selected = 3
+        min = 1,
+        max = 20,
+        value = 3,
+        step=1
       )
     )
   ),
@@ -43,5 +45,21 @@ ui <- fluidPage(
   plotlyOutput(
     "top_openings",
     height = "600px"
+  ),
+  tabPanel(
+    "Coups selon différence d'Elo",
+    
+    sliderInput(
+      "taille_elo",
+      "Taille des catégories d'écart Elo :",
+      min = 50,
+      max = 500,
+      value = 100,
+      step = 50
+    ),
+    
+    plotlyOutput("coups_elo", height = "600px")
   )
 )
+
+
