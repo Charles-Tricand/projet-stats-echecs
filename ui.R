@@ -18,7 +18,8 @@ fluidPage(
       tabsetPanel(
         mod_elo_victory_ui("elo_victory_tab"),
         mod_nb_coups_ui("nb_coups_tab"),
-        mod_issue_parties_ui("issue_parties_tab")
+        mod_issue_parties_ui("issue_parties_tab"),
+        mod_diff_elo_max_ui("diff_elo_max_tab")
       )
     ),
 
