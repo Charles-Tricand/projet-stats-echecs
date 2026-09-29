@@ -67,51 +67,59 @@ server <- function(input, output, session) {
   
   output$coups_elo <- renderPlotly({
     
-    taille <- input$taille_elo
-    
     donnees <- Donnees_Chess %>%
+      filter(turns<=100) %>%
       mutate(
-        diff_elo = abs(white_rating - black_rating),
-        categorie_elo = floor(diff_elo / taille) * taille
-      ) %>%
-      group_by(categorie_elo) %>%
-      summarise(
-        nombre_coups_moyen = mean(turns, na.rm = TRUE),
-        nombre_parties = n(),
-        .groups = "drop"
-      ) %>%
-      arrange(categorie_elo) %>%
-      mutate(
-        categorie = paste0(
-          categorie_elo,
-          "-",
-          categorie_elo + taille - 1
-        ),
-        categorie = factor(
-          categorie,
-          levels = categorie
-        )
+        elo_blanc = white_rating,
+        elo_noir = black_rating
       )
     
     plot_ly(
       data = donnees,
-      x = ~categorie,
-      y = ~nombre_coups_moyen,
-      type = "bar",
-      hovertemplate = paste0(
-        "<b>Écart Elo : %{x}</b><br>",
-        "Nombre moyen de coups : %{y:.1f}<br>",
-        "Nombre de parties : %{customdata}<br>",
-        "<extra></extra>"
+      x = ~elo_blanc,
+      y = ~elo_noir,
+      type = "scatter",
+      mode = "markers",
+      
+      marker = list(
+        size = 7,
+        color = ~turns,
+        colorscale = "Viridis",
+        showscale = TRUE,
+        colorbar = list(
+          title = "Nombre de coups"
+        ),
+        opacity = 0.6
       ),
-      customdata = ~nombre_parties
+      
+      hovertemplate = paste0(
+        "<b>Elo blancs :</b> %{x}<br>",
+        "<b>Elo noirs :</b> %{y}<br>",
+        "<b>Nombre de coups :</b> %{marker.color}",
+        "<extra></extra>"
+      )
     ) %>%
       layout(
         xaxis = list(
-          title = "Différence de classement Elo"
+          title = "Elo des blancs",
+          showgrid = TRUE,
+          gridcolor = "#E5E7EB"
         ),
+        
         yaxis = list(
-          title = "Nombre moyen de coups"
+          title = "Elo des noirs",
+          showgrid = TRUE,
+          gridcolor = "#E5E7EB"
+        ),
+        
+        plot_bgcolor = "#FFFFFF",
+        paper_bgcolor = "#FFFFFF",
+        
+        margin = list(
+          l = 70,
+          r = 80,
+          t = 30,
+          b = 70
         )
       )
   })

@@ -198,6 +198,7 @@ df_proportion <- Donnees_Chess %>%
   ungroup() %>%
   filter(opening_eco %in% top_20$opening_eco)
 
+
 ggplot(df_proportion, aes(
   x = elo_bin,
   y = proportion,

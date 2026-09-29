@@ -3,14 +3,20 @@
 # run the application by clicking 'Run App' above.
 #
 # Find out more about building applications with Shiny here:
-#
+#calcule la proba de gagner avec le odds ratio 
 #    https://shiny.posit.co/
 #
-
 library(shiny)
+library(plotly)
 
-ui <- fluidPage(
-  
+ fluidPage(
+   tags$head(
+     tags$link(
+       rel = "stylesheet",
+       type = "text/css",
+       href = "style.css"
+     )
+   ),
   titlePanel("Les ouvertures les plus jouées selon le niveau Elo"),
   
   fluidRow(
@@ -35,7 +41,7 @@ ui <- fluidPage(
         min = 1,
         max = 20,
         value = 3,
-        step=1
+        step = 1
       )
     )
   ),
@@ -46,20 +52,13 @@ ui <- fluidPage(
     "top_openings",
     height = "600px"
   ),
+  
   tabPanel(
-    "Coups selon différence d'Elo",
+    "Elo blancs / Elo noirs",
     
-    sliderInput(
-      "taille_elo",
-      "Taille des catégories d'écart Elo :",
-      min = 50,
-      max = 500,
-      value = 100,
-      step = 50
-    ),
-    
-    plotlyOutput("coups_elo", height = "600px")
+    plotlyOutput(
+      "coups_elo",
+      height = "600px"
+    )
   )
 )
-
-
