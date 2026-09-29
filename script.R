@@ -52,3 +52,21 @@ Donnees_Chess$last_move_at <- as.POSIXct(
   tz = "UTC"
 )
 
+remotes::install_github("jbkunst/rchess")
+
+library(rchess)
+jeu <- Chess$new()
+
+jeu
+
+jeu <- Chess$new()
+
+jeu$move("e4")
+jeu$move("e5")
+jeu$move("Nf3")
+jeu$move("Nc6")
+jeu$move("Bb5")
+
+jeu
+
+jeu$move("f1")
