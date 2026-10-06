@@ -8,23 +8,15 @@
 # ==========================================================
 
 mod_calculateur_ui <- function(id) {
-  
   ns <- NS(id)
-  
   tabPanel(
-    
     "Calculateur",
-    
-    h2(
-      "Calculateur de résultat"
-    ),
-    
+    h2("Calculateur de résultat"),
     p(
       "Estimez les probabilités de victoire, de partie nulle ",
       "et de défaite à partir de la couleur, de l'Elo des joueurs ",
       "et de l'ouverture."
     ),
-    
     
     sidebarLayout(
       
@@ -33,106 +25,66 @@ mod_calculateur_ui <- function(id) {
       # ======================================================
       
       sidebarPanel(
-        
-        h4(
-          "Votre partie"
-        ),
-        
+        h4("Votre partie"),
         
         # ----------------------------------------------------
         # Couleur
         # ----------------------------------------------------
         
         radioButtons(
-          
           ns("couleur"),
-          
           label = "Votre couleur :",
-          
           choices = c(
             "Blancs" = "white",
-            "Noirs" = "black"
-          ),
-          
-          selected = "white"
-        ),
-        
+            "Noirs" = "black"),
+          selected = "white"),
         
         # ----------------------------------------------------
         # Elo du joueur
         # ----------------------------------------------------
         
         numericInput(
-          
           ns("elo_joueur"),
-          
           label = "Votre Elo :",
-          
           value = 1500,
-          
           min = 500,
-          
           max = 3000,
-          
-          step = 1
-        ),
-        
+          step = 1),
         
         # ----------------------------------------------------
         # Elo de l'adversaire
         # ----------------------------------------------------
         
         numericInput(
-          
           ns("elo_adversaire"),
-          
           label = "Elo de l'adversaire :",
-          
           value = 1500,
-          
           min = 500,
-          
           max = 3000,
-          
-          step = 1
-        ),
-        
+          step = 1),
         
         # ----------------------------------------------------
         # Ouverture
         # ----------------------------------------------------
         
         selectInput(
-          
           ns("opening_eco"),
-          
           label = "Code ECO de l'ouverture :",
-          
           choices = NULL,
-          
-          selected = NULL
-        ),
-        
+          selected = NULL),
         
         br(),
-        
         
         # ----------------------------------------------------
         # Bouton de calcul
         # ----------------------------------------------------
         
         actionButton(
-          
           ns("calculer"),
-          
           label = "Calculer",
-          
           class = "btn-primary",
-          
-          width = "100%"
-        )
-        
-      ),
+          width = "100%")
+        ),
       
       
       # ======================================================
@@ -140,31 +92,13 @@ mod_calculateur_ui <- function(id) {
       # ======================================================
       
       mainPanel(
-        
-        h3(
-          "Résultat estimé"
-        ),
-        
+        h3("Résultat estimé"),
         br(),
         
-        
-        uiOutput(
-          ns("resume")
-        ),
-        
-        
+        uiOutput(ns("resume")),
         br(),
         
-        
-        plotOutput(
-          
-          ns("graphique_probabilites"),
-          
-          height = "400px"
-        )
-        
-      )
-      
+        plotOutput(ns("graphique_probabilites"), height = "400px"))
     )
   )
 }
@@ -175,35 +109,22 @@ mod_calculateur_ui <- function(id) {
 # ==========================================================
 
 mod_calculateur_server <- function(id) {
-  
-  moduleServer(
-    
-    id,
-    
-    function(input, output, session) {
-      
+  moduleServer(id, function(input, output, session) {
       
       # ======================================================
       # LISTE DES ECO DISPONIBLES
       # ======================================================
       
       observe({
-        
         ecos <- levels(
           Donnees_modele$opening_eco_modele
         )
         
         updateSelectInput(
-          
           session,
-          
           "opening_eco",
-          
           choices = ecos,
-          
-          selected = if ("C50" %in% ecos) {
-            "C50"
-          } else {
+          selected = if ("C50" %in% ecos) {"C50"} else {
             ecos[1]
           }
         )
@@ -220,7 +141,6 @@ mod_calculateur_server <- function(id) {
         input$calculer,
         
         {
-          
           req(
             input$couleur,
             input$elo_joueur,
@@ -411,124 +331,45 @@ mod_calculateur_server <- function(id) {
         
         req(resultat)
         
-        
         donnees_graphique <- data.frame(
-          
           resultat = factor(
-            
-            c(
-              "Victoire",
-              "Partie nulle",
-              "Défaite"
-            ),
-            
-            levels = c(
-              "Victoire",
-              "Partie nulle",
-              "Défaite"
-            )
-          ),
-          
-          probabilite = c(
-            
-            resultat$victoire,
-            
-            resultat$nulle,
-            
-            resultat$defaite
-          )
-        )
-        
+            c("Victoire","Partie nulle","Défaite"),
+            levels = c("Victoire","Partie nulle","Défaite")),
+          probabilite = c(resultat$victoire, resultat$nulle, resultat$defaite))
         
         ggplot(
-          
           donnees_graphique,
-          
           aes(
             x = resultat,
             y = probabilite,
-            fill = resultat
-          )
-        ) +
-          
-          geom_col(
-            width = 0.6
-          ) +
-          
+            fill = resultat)) +
+          geom_col(width = 0.6) +
           geom_text(
-            
-            aes(
-              label = paste0(
-                round(
-                  probabilite * 100,
-                  1
-                ),
-                "%"
-              )
-            ),
-            
+            aes(label = paste0(round(probabilite * 100, 1),"%")),
             vjust = -0.4,
-            
-            size = 5
-          ) +
-          
+            size = 5) +
           scale_fill_manual(
-            
             values = c(
-              
               "Victoire" = "#4CAF50",
-              
               "Partie nulle" = "#888888",
-              
-              "Défaite" = "#C0392B"
-            )
-          ) +
+              "Défaite" = "#C0392B")) +
           
           scale_y_continuous(
-            
-            limits = c(
-              0,
-              max(
-                1,
-                max(
-                  donnees_graphique$probabilite
-                ) * 1.15
-              )
-            ),
-            
-            labels = function(x) {
-              paste0(
-                x * 100,
-                "%"
-              )
-            }
-          ) +
-          
+            limits = c(0, max(1, max(donnees_graphique$probabilite) * 1.15)),
+            labels = function(x) {paste0(x * 100,"%")}) +
           labs(
-            
             x = NULL,
-            
             y = "Probabilité",
-            
-            title = "Probabilité estimée de chaque résultat"
-          ) +
-          
-          theme_minimal(
-            base_size = 14
-          ) +
-          
+            title = "Probabilité estimée de chaque résultat") +
+          theme_minimal(base_size = 14) +
           theme(
-            
             legend.position = "none",
-            
             plot.title = element_text(
               face = "bold",
-              hjust = 0.5
-            )
+              hjust = 0.5)
           )
         
       })
-      
     }
   )
 }

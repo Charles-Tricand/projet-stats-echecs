@@ -3,72 +3,39 @@ mod_nb_coups_ui <- function(id) {
   ns <- NS(id)
   
   tabPanel(
-    
     "Nombre de coups",
-    
-    h2(
-      "Nombre moyen de coups selon le niveau des joueurs"
-    ),
-    
+    h2("Nombre moyen de coups selon le niveau des joueurs"),
     sidebarLayout(
-      
       sidebarPanel(
-        
         radioButtons(
           inputId = ns("variable_x"),
-          
           label = "Variable étudiée :",
-          
           choices = c(
             "Elo moyen de la partie" = "elo_moyen",
             "Différence d'Elo" = "elo_diff"
           ),
-          
           selected = "elo_moyen"
         ),
         
-        
         sliderInput(
-          
           inputId = ns("diff_elo_max"),
-          
           label = "Différence maximale d'Elo entre les joueurs :",
-          
           min = 0,
           max = 1000,
           value = 400,
           step = 50
         )
-        
       ),
       
       
       mainPanel(
-        
         plotlyOutput(
           ns("graphique_temps_elo"),
-          height = "600px"
-        )
-        
+          height = "600px")
       )
     )
   )
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -86,10 +53,7 @@ mod_nb_coups_server <- function(id) {
       # ======================================================
       
       Donnees_filtrees <- Donnees_Chess |>
-        
-        filter(
-          elo_diff_abs <= input$diff_elo_max
-        )
+        filter(elo_diff_abs <= input$diff_elo_max)
       
       
       # ======================================================
@@ -134,74 +98,31 @@ mod_nb_coups_server <- function(id) {
         # ----------------------------------------------------
         
         Donnees_graphique <- Donnees_filtrees |>
+          mutate(elo_classe = cut(
+            elo_moyen,
+            breaks = seq(
+              floor(min(elo_moyen,na.rm = TRUE) / 100) * 100, 
+              ceiling(max(elo_moyen, na.rm = TRUE) / 100) * 100,
+              by = 100),
+            include.lowest = TRUE)) |>
           
-          mutate(
-            
-            elo_classe = cut(
-              
-              elo_moyen,
-              
-              breaks = seq(
-                
-                floor(
-                  min(
-                    elo_moyen,
-                    na.rm = TRUE
-                  ) / 100
-                ) * 100,
-                
-                ceiling(
-                  max(
-                    elo_moyen,
-                    na.rm = TRUE
-                  ) / 100
-                ) * 100,
-                
-                by = 100
-              ),
-              
-              include.lowest = TRUE
-            )
-          ) |>
-          
-          group_by(
-            elo_classe
-          ) |>
+          group_by(elo_classe) |>
           
           summarise(
-            
-            valeur_moyenne = mean(
-              elo_moyen,
-              na.rm = TRUE
-            ),
-            
-            coups_moyens = mean(
-              turns,
-              na.rm = TRUE
-            ),
-            
+            valeur_moyenne = mean(elo_moyen, na.rm = TRUE),
+            coups_moyens = mean(turns,na.rm = TRUE),
             nombre_parties = n(),
-            
-            .groups = "drop"
-          ) |>
+            .groups = "drop") |>
           
-          filter(
-            !is.na(valeur_moyenne)
-          )
-        
-        
+          filter(!is.na(valeur_moyenne))
         titre <- "Nombre moyen de coups selon l'Elo moyen"
-        
         sous_titre <- paste0(
           "Parties avec une différence d'Elo ≤ ",
           input$diff_elo_max,
-          " points"
-        )
-        
+          " points")
         nom_x <- "Elo moyen de la partie"
-        
-        
-      } else {
+        } 
+      else {
         
         
         # ====================================================
@@ -209,67 +130,22 @@ mod_nb_coups_server <- function(id) {
         # ====================================================
         
         Donnees_graphique <- Donnees_filtrees |>
-          
           mutate(
-            
             elo_diff_classe = cut(
-              
               elo_diff_abs,
-              
-              breaks = seq(
-                
-                0,
-                
-                ceiling(
-                  max(
-                    elo_diff_abs,
-                    na.rm = TRUE
-                  ) / 100
-                ) * 100,
-                
-                by = 100
-              ),
-              
-              include.lowest = TRUE
-            )
-          ) |>
-          
-          group_by(
-            elo_diff_classe
-          ) |>
-          
+              breaks = seq(0,ceiling(max(elo_diff_abs,na.rm = TRUE) / 100) * 100,by = 100),
+              include.lowest = TRUE)) |>
+          group_by(elo_diff_classe) |>
           summarise(
-            
-            valeur_moyenne = mean(
-              elo_diff_abs,
-              na.rm = TRUE
-            ),
-            
-            coups_moyens = mean(
-              turns,
-              na.rm = TRUE
-            ),
-            
+            valeur_moyenne = mean(elo_diff_abs, na.rm = TRUE),
+            coups_moyens = mean(turns, na.rm = TRUE),
             nombre_parties = n(),
-            
-            .groups = "drop"
-          ) |>
-          
-          filter(
-            !is.na(valeur_moyenne)
-          )
-        
-        
+            .groups = "drop") |>
+          filter(!is.na(valeur_moyenne))
+
         titre <- "Nombre moyen de coups selon la différence d'Elo"
-        
-        sous_titre <- paste0(
-          "Parties avec une différence d'Elo ≤ ",
-          input$diff_elo_max,
-          " points"
-        )
-        
+        sous_titre <- paste0("Parties avec une différence d'Elo ≤ ", input$diff_elo_max, " points")
         nom_x <- "Différence d'Elo"
-        
       }
       
       
@@ -283,47 +159,14 @@ mod_nb_coups_server <- function(id) {
       
       
       Donnees_graphique <- Donnees_graphique |>
-        
         mutate(
-          
           proportion_parties =
             nombre_parties / nombre_total,
-          
           texte_survol = paste0(
-            
-            "<b>",
-            nom_x,
-            "</b> : ",
-            round(
-              valeur_moyenne,
-              0
-            ),
-            
-            "<br>",
-            
-            "<b>Nombre moyen de coups</b> : ",
-            round(
-              coups_moyens,
-              1
-            ),
-            
-            "<br>",
-            
-            "<b>Nombre de parties</b> : ",
-            format(
-              nombre_parties,
-              big.mark = " "
-            ),
-            
-            "<br>",
-            
-            "<b>Part des parties</b> : ",
-            round(
-              proportion_parties * 100,
-              1
-            ),
-            "%"
-            
+            "<b>", nom_x, "</b> : ", round(valeur_moyenne,0), "<br>",
+            "<b>Nombre moyen de coups</b> : ", round(coups_moyens, 1), "<br>",
+            "<b>Nombre de parties</b> : ", format(nombre_parties, big.mark = " "), "<br>",
+            "<b>Part des parties</b> : ", round(proportion_parties * 100, 1), "%"
           )
         )
       
@@ -333,163 +176,95 @@ mod_nb_coups_server <- function(id) {
       # ======================================================
       
       graphique <- ggplot(
-        
         Donnees_graphique,
-        
         aes(
           x = valeur_moyenne,
           y = coups_moyens
-        )
+        )) +
         
-      ) +
-        
-        
-        # ----------------------------------------------------
+      # ----------------------------------------------------
       # MOYENNE GENERALE
       # ----------------------------------------------------
       
       geom_hline(
-        
         yintercept = moyenne_generale,
-        
         color = "#95A5A6",
-        
         linewidth = 0.9,
+        linetype = "dashed") +
         
-        linetype = "dashed"
-      ) +
-        
-        
-        # ----------------------------------------------------
+      # ----------------------------------------------------
       # COURBE
       # ----------------------------------------------------
       
       geom_line(
-        
         color = "#2C3E50",
-        
-        linewidth = 1
-      ) +
-        
-        
-        # ----------------------------------------------------
+        linewidth = 1) +
+
+      # ----------------------------------------------------
       # POINTS
       # ----------------------------------------------------
       
       geom_point(
-        
         aes(
           size = nombre_parties,
-          text = texte_survol
-        ),
-        
+          text = texte_survol),
         color = "#3498DB",
-        
-        alpha = 0.75
-      ) +
+        alpha = 0.75) +
         
         
-        # ----------------------------------------------------
+      # ----------------------------------------------------
       # TAILLE DES POINTS
       # ----------------------------------------------------
       
       scale_size_area(
-        
         max_size = 10,
-        
-        name = "Nombre de parties"
-      ) +
+        name = "Nombre de parties") +
         
         
-        # ----------------------------------------------------
+      # ----------------------------------------------------
       # ANNOTATION
       # ----------------------------------------------------
       
       annotate(
-        
         "text",
-        
         x = Inf,
-        
         y = moyenne_generale,
-        
-        label = paste0(
-          "Moyenne générale : ",
-          round(
-            moyenne_generale,
-            1
-          ),
-          " coups"
-        ),
-        
+        label = paste0("Moyenne générale : ", round(moyenne_generale,1), " coups"),
         hjust = 1.05,
-        
         vjust = -0.7,
-        
         color = "#7F8C8D",
+        size = 4) +
         
-        size = 4
-      ) +
-        
-        
-        # ----------------------------------------------------
+      # ----------------------------------------------------
       # TITRES
       # ----------------------------------------------------
       
       labs(
-        
         title = titre,
-        
         subtitle = sous_titre,
-        
         x = nom_x,
+        y = "Nombre moyen de coups") +
         
-        y = "Nombre moyen de coups"
-      ) +
-        
-        
-        # ----------------------------------------------------
+      # ----------------------------------------------------
       # THEME
       # ----------------------------------------------------
       
-      theme_minimal(
-        
-        base_size = 14
-        
-      ) +
-        
-        theme(
-          
-          legend.position = "bottom"
-          
-        )
+      theme_minimal(base_size = 14) +
+        theme(legend.position = "bottom")
       
       
       # ======================================================
       # 7. CONVERSION EN PLOTLY
       # ======================================================
       
-      ggplotly(
-        
-        graphique,
-        
-        tooltip = "text"
-        
-      ) |>
-        
+      ggplotly(graphique, tooltip = "text") |>
         layout(
-          
           hoverlabel = list(
-            
             bgcolor = "white",
-            
             bordercolor = "#3498DB",
-            
             font = list(
               color = "#2C3E50",
-              size = 13
-            )
-            
+              size = 13)
           )
           
         )

@@ -20,7 +20,7 @@ fluidPage(
         mod_nb_coups_ui("nb_coups_tab"),
         mod_issue_parties_ui("issue_parties_tab"),
         mod_diff_elo_max_ui("diff_elo_max_tab"),
-        mod_calculateur_ui("calculateur_tab")
+        mod_calculateur_ui("calculateur_tab"),
       )
     ),
 
