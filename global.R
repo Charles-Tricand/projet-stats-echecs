@@ -7,6 +7,7 @@ library(tidyverse)
 library(ggplot2)
 library(readr)
 library(htmltools)
+library(plotly)
 
 # Install rchess from GitHub if not already installed
 # remotes::install_github("jbkunst/rchess")
