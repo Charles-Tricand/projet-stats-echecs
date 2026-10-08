@@ -40,23 +40,43 @@ mod_openings_elo_server <- function(id) {
         x=~reorder(opening_name,-proportion),
         y=~proportion,
         type="bar",
-        marker=list(color="white"),
+        marker=list(color="black",line=list(width=0)),
         text=~opening_name,
         textposition="inside",
-        insidetextfont=list(color="black"),
+        insidetextfont=list(color="white",size=10),
         hovertemplate=paste0(
           "<b>%{x}</b><br>",
-          "Nombre de parties : %{text}<br>",
           "Proportion : %{y:.2%}",
           "<extra></extra>"
         )
       ) %>%
         layout(
-          xaxis=list(title="",tickangle=-45,color="white",showgrid=FALSE,showticklabels=FALSE),
-          yaxis=list(title="Proportion des parties",tickformat=".1%",color="white",showgrid=FALSE),
-          plot_bgcolor="black",
-          paper_bgcolor="black",
-          font=list(color="white")
+          title=list(
+            text=paste0(
+              "Les ",input$nb_openings,
+              " ouvertures les plus jouées — Elo ",input$elo
+            ),
+            font=list(size=20,color="white"),
+            x=0.5,
+            xanchor="center"
+          ),
+          xaxis=list(
+            title="",
+            showgrid=FALSE,
+            zeroline=FALSE,
+            showline=FALSE
+          ),
+          yaxis=list(
+            title="",
+            showticklabels=FALSE,
+            showgrid=FALSE,
+            zeroline=FALSE,
+            showline=FALSE
+          ),
+          plot_bgcolor="white",
+          paper_bgcolor="white",
+          font=list(color="black"),
+          margin=list(l=20,r=20,t=80,b=30)
         )
     })
   })

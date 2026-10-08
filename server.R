@@ -12,4 +12,5 @@ server <- function(input, output, session) {
   mod_diff_elo_max_server("diff_elo_max_tab")
   mod_calculateur_server("calculateur_tab")
   mod_openings_elo_server("openings_elo_tab")
+  mod_openings_quadrant_server("openings_quadrant_tab")
 }

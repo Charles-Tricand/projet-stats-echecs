@@ -9,7 +9,7 @@ library(readr)
 library(htmltools)
 library(plotly)
 library(nnet)
-
+library(ggrepel)
 # Install rchess from GitHub if not already installed
 # remotes::install_github("jbkunst/rchess")
 
