@@ -11,4 +11,5 @@ server <- function(input, output, session) {
   mod_issue_parties_server("issue_parties_tab")
   mod_diff_elo_max_server("diff_elo_max_tab")
   mod_calculateur_server("calculateur_tab")
+  mod_openings_elo_server("openings_elo_tab")
 }
