@@ -11,4 +11,6 @@ server <- function(input, output, session) {
   mod_issue_parties_server("issue_parties_tab")
   mod_diff_elo_max_server("diff_elo_max_tab")
   mod_calculateur_server("calculateur_tab")
+  mod_echiquier_interactif_server("echiquier_interactif_tab")
+  
 }

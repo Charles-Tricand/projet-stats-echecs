@@ -154,15 +154,10 @@ mod_calculateur_server <- function(id) {
           # --------------------------------------------------
           
           resultat <- predire_resultat(
-            
             couleur = input$couleur,
-            
             elo_joueur = input$elo_joueur,
-            
             elo_adversaire = input$elo_adversaire,
-            
-            opening_eco = input$opening_eco
-          )
+            opening_eco = input$opening_eco)
           
           
           # --------------------------------------------------
@@ -170,7 +165,6 @@ mod_calculateur_server <- function(id) {
           # --------------------------------------------------
           
           resultat
-          
         }
       )
       
@@ -180,14 +174,9 @@ mod_calculateur_server <- function(id) {
       # ======================================================
       
       output$resume <- renderUI({
-        
         resultat <- prediction()
-        
         req(resultat)
-        
-        
         div(
-          
           style = "
             display: flex;
             justify-content: center;
@@ -196,44 +185,22 @@ mod_calculateur_server <- function(id) {
             margin: 20px 0 30px 0;
           ",
           
-          
           # --------------------------------------------------
           # VICTOIRE
           # --------------------------------------------------
           
           div(
-            
             style = "
               text-align: center;
               min-width: 130px;
             ",
+            div(
+              style = "font-size: 36px; font-weight: bold; color: #4CAF50;",
+              paste0(round(resultat$victoire * 100,1),"%")),
             
             div(
-              
-              style = "
-                font-size: 36px;
-                font-weight: bold;
-                color: #4CAF50;
-              ",
-              
-              paste0(
-                round(
-                  resultat$victoire * 100,
-                  1
-                ),
-                "%"
-              )
-            ),
-            
-            div(
-              
-              style = "
-                font-size: 15px;
-                color: #555555;
-              ",
-              
-              "Victoire"
-            )
+              style = "font-size: 15px; color: #555555;",
+              "Victoire")
           ),
           
           
@@ -242,95 +209,38 @@ mod_calculateur_server <- function(id) {
           # --------------------------------------------------
           
           div(
-            
-            style = "
-              text-align: center;
-              min-width: 130px;
-            ",
-            
+            style = "text-align: center; min-width: 130px;",
             div(
-              
-              style = "
-                font-size: 36px;
-                font-weight: bold;
-                color: #888888;
-              ",
-              
-              paste0(
-                round(
-                  resultat$nulle * 100,
-                  1
-                ),
-                "%"
-              )
+              style = "font-size: 36px; font-weight: bold; color: #888888;",
+              paste0(round(resultat$nulle * 100, 1),"%")),
+            div(
+              style = "font-size: 15px; color: #555555;",
+              "Partie nulle")
             ),
-            
-            div(
-              
-              style = "
-                font-size: 15px;
-                color: #555555;
-              ",
-              
-              "Partie nulle"
-            )
-          ),
-          
           
           # --------------------------------------------------
           # DEFAITE
           # --------------------------------------------------
           
           div(
-            
-            style = "
-              text-align: center;
-              min-width: 130px;
-            ",
-            
+            style = "text-align: center; min-width: 130px;",
             div(
-              
-              style = "
-                font-size: 36px;
-                font-weight: bold;
-                color: #C0392B;
-              ",
-              
-              paste0(
-                round(
-                  resultat$defaite * 100,
-                  1
-                ),
-                "%"
-              )
-            ),
-            
+              style = "font-size: 36px; font-weight: bold; color: #C0392B;",
+              paste0(round(resultat$defaite * 100, 1),"%")),
             div(
-              
-              style = "
-                font-size: 15px;
-                color: #555555;
-              ",
-              
-              "Défaite"
+              style = "font-size: 15px; color: #555555;",
+              "Défaite")
             )
-          )
-          
         )
-        
       })
-      
       
       # ======================================================
       # GRAPHIQUE
       # ======================================================
       
       output$graphique_probabilites <- renderPlot({
-        
         resultat <- prediction()
-        
         req(resultat)
-        
         donnees_graphique <- data.frame(
           resultat = factor(
             c("Victoire","Partie nulle","Défaite"),
