@@ -1,37 +1,399 @@
-#nb_openings .irs--shiny .irs-handle {
-  width: 36px !important;
-  height: 36px !important;
-  top: 16px !important;
-  border: none !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  cursor: pointer !important;
+/* ========================================================= LES ÉCHECS, EN DONNÉES Thème éditorial échiquéen pour R Shiny ========================================================= */
+
+/* ---------------------------------------------------------
+
+VARIABLES GLOBALES
+--------------------------------------------------------- */
+
+:root { --chess-paper: #F8F6F0; --chess-paper-dark: #EEEAE0; --chess-white: #FFFFFF;
+
+--chess-ink: #252525; --chess-ink-soft: #45453F; --chess-muted: #74746B;
+
+--chess-sage: #C9D8C5; --chess-sage-dark: #536D57;
+
+--chess-red: #A7473D; --chess-gold: #8A6827;
+
+--chess-border: #D9D5C9; --chess-border-strong: #BDB7A8;
+
+--chess-shadow: 0 5px 18px rgba(37, 37, 37, 0.045);
+
+--chess-radius: 10px; --chess-radius-small: 6px;
+
+--chess-transition: 180ms ease; }
+
+/* ---------------------------------------------------------
+
+FOND ET TYPOGRAPHIE
+--------------------------------------------------------- */
+
+html { scroll-behavior: smooth; }
+
+body { background-color: var(--chess-paper); color: var(--chess-ink);
+
+font-family: "Source Sans 3", "Segoe UI", Arial, sans-serif;
+
+font-size: 15px; line-height: 1.65;
+
+-webkit-font-smoothing: antialiased; }
+
+.container-fluid { max-width: 1800px; margin: 0 auto; padding: 28px 34px 48px; }
+
+p { color: var(--chess-ink-soft); }
+
+a { color: var(--chess-sage-dark); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+
+a:hover { color: var(--chess-ink); }
+
+/* ---------------------------------------------------------
+
+TITRES ÉDITORIAUX
+--------------------------------------------------------- */
+
+h1, h2, h3, h4, h5 { color: var(--chess-ink); font-family: Georgia, "Times New Roman", serif; font-weight: 600; line-height: 1.25; }
+
+h1 { font-size: clamp(28px, 3vw, 40px); letter-spacing: -0.8px; margin-top: 12px; margin-bottom: 30px; padding-bottom: 18px; border-bottom: 1px solid var(--chess-border); }
+
+h2 { font-size: clamp(23px, 2vw, 30px); margin-top: 18px; margin-bottom: 22px; }
+
+h3 { font-size: 21px; margin-top: 22px; margin-bottom: 14px; }
+
+h4 { font-size: 18px; }
+
+/* ---------------------------------------------------------
+
+BANDEAU PRINCIPAL
+--------------------------------------------------------- */
+
+h1#app-title { display: block; }
+
+/* Le titre standard de Shiny reste sobre. Un bandeau personnalisé pourra être ajouté ensuite. */
+
+.title-panel, .shiny-title-panel { margin-bottom: 26px; }
+
+/* ---------------------------------------------------------
+
+ONGLETS PRINCIPAUX
+--------------------------------------------------------- */
+
+.nav-tabs { display: flex; flex-wrap: wrap; gap: 6px;
+
+margin-bottom: 26px; padding: 0 0 8px;
+
+border: none; border-bottom: 1px solid var(--chess-border); }
+
+.nav-tabs > li { float: none; margin-bottom: 0; }
+
+.nav-tabs > li > a { margin: 0; padding: 11px 17px;
+
+color: var(--chess-muted); background: transparent;
+
+border: 1px solid transparent; border-radius: var(--chess-radius-small);
+
+font-weight: 600; transition: background var(--chess-transition), color var(--chess-transition), border-color var(--chess-transition); }
+
+.nav-tabs > li > a:hover { color: var(--chess-ink); background: var(--chess-paper-dark); border-color: var(--chess-border); }
+
+.nav-tabs > li.active > a, .nav-tabs > li.active > a:hover, .nav-tabs > li.active > a:focus { color: var(--chess-ink); background: var(--chess-white);
+
+border: 1px solid var(--chess-border); border-bottom: 2px solid var(--chess-sage-dark);
+
+font-weight: 700; }
+
+/* ---------------------------------------------------------
+
+PANNEAUX ET CARTES
+--------------------------------------------------------- */
+
+.well, .panel, .card { background: var(--chess-white); border: 1px solid var(--chess-border); border-radius: var(--chess-radius);
+
+box-shadow: var(--chess-shadow); }
+
+.well { padding: 22px; }
+
+.panel-heading { background: var(--chess-paper-dark); color: var(--chess-ink);
+
+border-color: var(--chess-border); border-radius: var(--chess-radius) var(--chess-radius) 0 0;
+
+font-weight: 700; }
+
+.panel-body { padding: 22px; }
+
+hr { border-top: 1px solid var(--chess-border); margin: 26px 0; }
+
+/* ---------------------------------------------------------
+
+FILTRES ET CHAMPS DE SAISIE
+--------------------------------------------------------- */
+
+.control-label { display: block; margin-bottom: 7px;
+
+color: var(--chess-ink); font-size: 13px; font-weight: 700; letter-spacing: 0.2px; }
+
+.form-control, .selectize-input, .selectize-control.single .selectize-input { min-height: 40px;
+
+color: var(--chess-ink); background: var(--chess-white);
+
+border: 1px solid var(--chess-border-strong); border-radius: var(--chess-radius-small);
+
+box-shadow: none; transition: border-color var(--chess-transition), box-shadow var(--chess-transition); }
+
+.form-control:focus, .selectize-input.focus, .selectize-control.single .selectize-input.focus { border-color: var(--chess-sage-dark); box-shadow: 0 0 0 3px rgba(83, 109, 87, 0.14); outline: none; }
+
+.form-group { margin-bottom: 22px; }
+
+.help-block { color: var(--chess-muted); font-size: 12px; }
+
+/* ---------------------------------------------------------
+
+BOUTONS
+--------------------------------------------------------- */
+
+.btn { min-height: 38px; padding: 8px 16px;
+
+border-radius: var(--chess-radius-small); border: 1px solid transparent;
+
+font-weight: 600; transition: background var(--chess-transition), color var(--chess-transition), border-color var(--chess-transition), box-shadow var(--chess-transition); }
+
+.btn-default { color: var(--chess-ink); background: var(--chess-white); border-color: var(--chess-border-strong); }
+
+.btn-default:hover, .btn-default:focus { color: var(--chess-ink); background: var(--chess-paper-dark); border-color: var(--chess-ink-soft); }
+
+.btn-primary { color: var(--chess-white); background: var(--chess-ink); border-color: var(--chess-ink); }
+
+.btn-primary:hover, .btn-primary:focus { color: var(--chess-white); background: var(--chess-sage-dark); border-color: var(--chess-sage-dark); }
+
+.btn:focus-visible, a:focus-visible, input:focus-visible, button:focus-visible { outline: 3px solid var(--chess-gold); outline-offset: 3px; }
+
+/* ---------------------------------------------------------
+
+BOUTONS RADIO ET CASES À COCHER
+--------------------------------------------------------- */
+
+.radio, .checkbox { margin-top: 10px; margin-bottom: 10px; }
+
+.radio label, .checkbox label { color: var(--chess-ink-soft); line-height: 1.5; }
+
+input[type="radio"], input[type="checkbox"] { accent-color: var(--chess-sage-dark); }
+
+/* ---------------------------------------------------------
+
+CURSEURS SHINY / ION.RANGESLIDER
+--------------------------------------------------------- */
+
+.irs--shiny .irs-bar, .irs--shiny .irs-bar-edge { background: var(--chess-sage-dark); border-color: var(--chess-sage-dark); }
+
+.irs--shiny .irs-single, .irs--shiny .irs-from, .irs--shiny .irs-to { color: var(--chess-white); background: var(--chess-ink); }
+
+.irs--shiny .irs-handle { border-color: var(--chess-sage-dark); }
+
+.irs--shiny .irs-handle > i:first-child { background: var(--chess-sage-dark); }
+
+.irs--shiny .irs-line { background: var(--chess-paper-dark); border-color: var(--chess-border); }
+
+.irs--shiny .irs-grid-text, .irs--shiny .irs-min, .irs--shiny .irs-max { color: var(--chess-muted); }
+
+/* ---------------------------------------------------------
+
+ZONES DE GRAPHIQUES
+--------------------------------------------------------- */
+
+.shiny-plot-output, .plotly, .html-widget { max-width: 100%; }
+
+.shiny-plot-output { margin-top: 10px; margin-bottom: 22px; }
+
+/* Les fonds des graphiques ggplot2 seront réglés directement dans les thèmes ggplot, pour préserver leur lisibilité et leurs légendes. */
+
+/* ---------------------------------------------------------
+
+TABLEAUX
+--------------------------------------------------------- */
+
+.table { background: var(--chess-white); border-color: var(--chess-border); }
+
+.table > thead > tr > th { color: var(--chess-ink);
+
+background: var(--chess-paper-dark); border-bottom: 2px solid var(--chess-border-strong);
+
+font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.table > tbody > tr > td { border-top: 1px solid var(--chess-border); }
+
+.table-striped > tbody > tr:nth-of-type(odd) { background: #F5F3EC; }
+
+/* ---------------------------------------------------------
+
+ALERTES ET MESSAGES
+--------------------------------------------------------- */
+
+.alert { border-radius: var(--chess-radius-small); border-width: 1px; }
+
+.alert-info { color: #294C42; background: #E8F0E6; border-color: #C9D8C5; }
+
+.alert-warning { color: #624B1E; background: #F8F0D9; border-color: #E4D19B; }
+
+.alert-danger { color: #752E29; background: #F8E8E5; border-color: #E6B8B1; }
+
+.alert-success { color: #294C42; background: #E8F0E6; border-color: #C9D8C5; }
+
+/* ---------------------------------------------------------
+
+MOTIF ÉCHIQUER DISCRET
+--------------------------------------------------------- */
+
+/* Classe facultative à ajouter à une zone décorative. Le motif ne s'applique pas automatiquement à toute la page. */
+
+.chess-pattern { background-color: var(--chess-paper);
+
+background-image: linear-gradient( 45deg, rgba(37, 37, 37, 0.035) 25%, transparent 25%, transparent 75%, rgba(37, 37, 37, 0.035) 75% ), linear-gradient( 45deg, rgba(37, 37, 37, 0.035) 25%, transparent 25%, transparent 75%, rgba(37, 37, 37, 0.035) 75% );
+
+background-position: 0 0, 16px 16px;
+
+background-size: 32px 32px; }
+
+/* ---------------------------------------------------------
+
+GUIDE PÉDAGOGIQUE
+--------------------------------------------------------- */
+
+/* Classes compatibles avec une page guide personnalisée. */
+
+.guide-header { padding: 30px; margin-bottom: 26px;
+
+background: var(--chess-ink); color: var(--chess-white);
+
+border-radius: var(--chess-radius); border-bottom: 4px solid var(--chess-sage-dark); }
+
+.guide-header h1, .guide-header h2, .guide-header h3, .guide-header p { color: var(--chess-white); }
+
+.guide-section { padding: 24px; margin-bottom: 18px;
+
+background: var(--chess-white); border: 1px solid var(--chess-border); border-radius: var(--chess-radius);
+
+box-shadow: var(--chess-shadow); }
+
+.guide-section h2, .guide-section h3 { padding-bottom: 12px; border-bottom: 1px solid var(--chess-border); }
+
+/* ---------------------------------------------------------
+
+RESPONSIVE : TABLETTES ET MOBILES
+--------------------------------------------------------- */
+
+@media (max-width: 992px) { .container-fluid { padding: 22px 20px 36px; }
+
+.nav-tabs { gap: 4px; }
+
+.nav-tabs > li > a { padding: 9px 12px; font-size: 13px; } }
+
+@media (max-width: 600px) { .container-fluid { padding: 16px 12px 28px; }
+
+h1 { font-size: 27px; margin-bottom: 22px; }
+
+h2 { font-size: 23px; }
+
+.well, .panel-body, .guide-section { padding: 16px; }
+
+.nav-tabs > li > a { padding: 8px 10px; font-size: 12px; } }
+
+
+/* ==========================================================
+   BOUTON D'AIDE DES GRAPHIQUES
+   ========================================================== */
+
+.graphique-entete {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
-#nb_openings .irs--shiny .irs-handle::before {
-  content: "♟" !important;
-  position: absolute !important;
-  display: block !important;
-  width: 36px !important;
-  height: 36px !important;
-  left: 0 !important;
-  top: 0 !important;
-  transform: none !important;
-  font-size: 34px !important;
-  line-height: 36px !important;
-  text-align: center !important;
-  color: #263238 !important;
-  font-family: "Times New Roman", serif !important;
+.btn-aide-graphique {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 36px;
+  height: 36px;
+  padding: 0;
+
+  color: #6F5037;
+  background-color: #F5F0E6;
+  border: 1px solid #DCCDB9;
+  border-radius: 50%;
+
+  box-shadow: 0 2px 5px rgba(64, 43, 26, 0.06);
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-#nb_openings .irs--shiny .irs-line {
-  height: 6px !important;
-  border-radius: 10px !important;
+.btn-aide-graphique:hover,
+.btn-aide-graphique:focus {
+  color: #FFFFFF;
+  background-color: #6F5037;
+  border-color: #6F5037;
+  box-shadow: 0 3px 8px rgba(64, 43, 26, 0.15);
 }
 
-#nb_openings .irs--shiny .irs-bar {
-  height: 6px !important;
-  border-radius: 10px !important;
-  background: #263238 !important;
+.btn-aide-graphique:focus-visible {
+  outline: 2px solid #A47C52;
+  outline-offset: 3px;
+}
+
+/* ==========================================================
+   FENETRE D'AIDE
+   ========================================================== */
+
+.modal-content {
+  color: #34271F;
+  background: #FFFDF8;
+  border: 1px solid #DCCDB9;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(52, 39, 31, 0.18);
+  overflow: hidden;
+}
+
+.modal-header {
+  background: #F0E7D9;
+  border-bottom: 1px solid #DCCDB9;
+  padding: 18px 22px;
+}
+
+.modal-title {
+  color: #4E3727;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 21px;
+  font-weight: 600;
+}
+
+.modal-body {
+  padding: 24px;
+  line-height: 1.7;
+}
+
+.modal-body h4 {
+  color: #6F5037;
+  font-size: 16px;
+  font-weight: 700;
+  margin-top: 18px;
+  margin-bottom: 8px;
+}
+
+.modal-body h4:first-child {
+  margin-top: 0;
+}
+
+.modal-body ul {
+  padding-left: 22px;
+}
+
+.modal-body li {
+  margin-bottom: 8px;
+}
+
+.modal-footer {
+  background: #FAF6EF;
+  border-top: 1px solid #E5D9C8;
+  padding: 14px 22px;
 }
