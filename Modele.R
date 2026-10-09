@@ -1,3 +1,7 @@
+# ==========================================================
+# MODELE : PREDICTION DU RESULTAT D'UNE PARTIE
+# ==========================================================
+
 library(nnet)
 
 
@@ -5,39 +9,46 @@ library(nnet)
 # 1. PARAMETRES
 # ==========================================================
 
-# Nombre minimum de parties nécessaire pour qu'un ECO
-# soit conservé comme catégorie propre dans le modèle.
+# Nombre minimum de parties nécessaire pour qu'une ouverture
+# soit conservée comme catégorie propre dans le modèle.
 #
-# Les ECO apparaissant moins souvent seront regroupés
+# Les ouvertures apparaissant moins souvent seront regroupées
 # dans la catégorie "Autres".
 
-SEUIL_ECO <- 50
+SEUIL_OPENING_NAME <- 50
 
 
 # ==========================================================
-# 2. IDENTIFICATION DES ECO SUFFISAMMENT REPRESENTES
+# 2. IDENTIFICATION DES OUVERTURES SUFFISAMMENT REPRESENTEES
 # ==========================================================
 
-ecos_frequents <- Donnees_Chess |>
+openings_frequentes <- Donnees_Chess |>
+  
   filter(
-    !is.na(opening_eco)
+    !is.na(opening_name)
   ) |>
-  count(opening_eco) |>
+  
+  count(opening_name) |>
+  
   filter(
-    n >= SEUIL_ECO
+    n >= SEUIL_OPENING_NAME
   ) |>
-  pull(opening_eco)
+  
+  pull(opening_name)
 
 
 cat(
-  "\nNombre d'ECO suffisamment représentés :",
-  length(ecos_frequents),
+  "\nNombre d'ouvertures suffisamment représentées :",
+  length(openings_frequentes),
   "\n"
 )
 
 cat(
-  "Nombre total d'ECO dans les données :",
-  n_distinct(Donnees_Chess$opening_eco, na.rm = TRUE),
+  "Nombre total d'ouvertures dans les données :",
+  n_distinct(
+    Donnees_Chess$opening_name,
+    na.rm = TRUE
+  ),
   "\n"
 )
 
@@ -68,6 +79,7 @@ Donnees_modele <- bind_rows(
   # ========================================================
   
   Donnees_Chess |>
+    
     transmute(
       
       elo_joueur = white_rating,
@@ -78,12 +90,16 @@ Donnees_modele <- bind_rows(
       
       couleur = "white",
       
-      opening_eco = opening_eco,
+      opening_name = opening_name,
       
       resultat = case_when(
+        
         winner == "white" ~ "win",
-        winner == "draw"  ~ "draw",
+        
+        winner == "draw" ~ "draw",
+        
         winner == "black" ~ "loss",
+        
         TRUE ~ NA_character_
       )
     ),
@@ -94,6 +110,7 @@ Donnees_modele <- bind_rows(
   # ========================================================
   
   Donnees_Chess |>
+    
     transmute(
       
       elo_joueur = black_rating,
@@ -104,12 +121,16 @@ Donnees_modele <- bind_rows(
       
       couleur = "black",
       
-      opening_eco = opening_eco,
+      opening_name = opening_name,
       
       resultat = case_when(
+        
         winner == "black" ~ "win",
-        winner == "draw"  ~ "draw",
+        
+        winner == "draw" ~ "draw",
+        
         winner == "white" ~ "loss",
+        
         TRUE ~ NA_character_
       )
     )
@@ -118,27 +139,36 @@ Donnees_modele <- bind_rows(
   
   
   # ========================================================
-# 4. REGROUPEMENT DES ECO RARES
+# 4. REGROUPEMENT DES OUVERTURES RARES
 # ========================================================
 
 mutate(
   
-  opening_eco_modele = if_else(
-    opening_eco %in% ecos_frequents,
-    opening_eco,
+  opening_name_modele = if_else(
+    
+    opening_name %in% openings_frequentes,
+    
+    opening_name,
+    
     "Autres"
   ),
   
+  
   couleur = factor(
+    
     couleur,
+    
     levels = c(
       "white",
       "black"
     )
   ),
   
+  
   resultat = factor(
+    
     resultat,
+    
     levels = c(
       "loss",
       "draw",
@@ -146,8 +176,10 @@ mutate(
     )
   ),
   
-  opening_eco_modele = factor(
-    opening_eco_modele
+  
+  opening_name_modele = factor(
+    
+    opening_name_modele
   )
   
 ) |>
@@ -158,10 +190,15 @@ mutate(
 # ========================================================
 
 filter(
+  
   !is.na(elo_joueur),
+  
   !is.na(elo_adversaire),
+  
   !is.na(elo_diff),
-  !is.na(opening_eco_modele),
+  
+  !is.na(opening_name_modele),
+  
   !is.na(resultat)
 )
 
@@ -195,8 +232,8 @@ cat(
 )
 
 cat(
-  "Nombre de catégories ECO utilisées :",
-  nlevels(Donnees_modele$opening_eco_modele),
+  "Nombre de catégories d'ouvertures utilisées :",
+  nlevels(Donnees_modele$opening_name_modele),
   "\n"
 )
 
@@ -229,16 +266,21 @@ print(
 
 
 # ==========================================================
-# 8. REPARTITION DES ECO DU MODELE
+# 8. REPARTITION DES OUVERTURES DU MODELE
 # ==========================================================
 
 cat(
-  "\nNombre de parties par catégorie ECO :\n"
+  "\nNombre de parties par catégorie d'ouverture :\n"
 )
 
 print(
   Donnees_modele |>
-    count(opening_eco_modele, sort = TRUE) |>
+    
+    count(
+      opening_name_modele,
+      sort = TRUE
+    ) |>
+    
     head(20)
 )
 
@@ -262,7 +304,7 @@ cat(
 
 modele_complet <- multinom(
   
-  resultat ~ elo_diff + couleur + opening_eco_modele,
+  resultat ~ elo_diff + couleur + opening_name_modele,
   
   data = Donnees_modele,
   
@@ -276,21 +318,27 @@ cat(
 
 
 # ==========================================================
-# FONCTION DE PREDICTION
+# 10. FONCTION DE PREDICTION
 # ==========================================================
 
 predire_resultat <- function(
     couleur,
     elo_joueur,
     elo_adversaire,
-    opening_eco
+    opening_name
 ) {
+  
   
   # --------------------------------------------------------
   # Vérification de la couleur
   # --------------------------------------------------------
   
-  if (!couleur %in% c("white", "black")) {
+  if (
+    !couleur %in% c(
+      "white",
+      "black"
+    )
+  ) {
     
     stop(
       "La couleur doit être 'white' ou 'black'."
@@ -306,19 +354,41 @@ predire_resultat <- function(
   
   
   # --------------------------------------------------------
-  # Détermination de la catégorie ECO
+  # Vérification du nom de l'ouverture
   # --------------------------------------------------------
   
   if (
-    opening_eco %in%
-    levels(Donnees_modele$opening_eco_modele)
+    is.null(opening_name) ||
+    length(opening_name) != 1 ||
+    is.na(opening_name)
   ) {
     
-    eco_modele <- opening_eco
+    stop(
+      "Le nom de l'ouverture doit être renseigné."
+    )
+  }
+  
+  
+  # --------------------------------------------------------
+  # Détermination de la catégorie utilisée par le modèle
+  # --------------------------------------------------------
+  #
+  # Si l'ouverture est suffisamment représentée dans les
+  # données, elle possède sa propre catégorie.
+  #
+  # Sinon, elle est envoyée dans "Autres".
+  #
+  
+  if (
+    opening_name %in%
+    levels(Donnees_modele$opening_name_modele)
+  ) {
+    
+    ouverture_modele <- opening_name
     
   } else {
     
-    eco_modele <- "Autres"
+    ouverture_modele <- "Autres"
     
   }
   
@@ -332,14 +402,20 @@ predire_resultat <- function(
     elo_diff = elo_diff,
     
     couleur = factor(
+      
       couleur,
-      levels = levels(Donnees_modele$couleur)
+      
+      levels = levels(
+        Donnees_modele$couleur
+      )
     ),
     
-    opening_eco_modele = factor(
-      eco_modele,
+    opening_name_modele = factor(
+      
+      ouverture_modele,
+      
       levels = levels(
-        Donnees_modele$opening_eco_modele
+        Donnees_modele$opening_name_modele
       )
     )
   )
@@ -350,8 +426,11 @@ predire_resultat <- function(
   # --------------------------------------------------------
   
   prediction <- predict(
+    
     modele_complet,
+    
     nouvelle_partie,
+    
     type = "probs"
   )
   
@@ -360,19 +439,26 @@ predire_resultat <- function(
   # Conversion robuste en valeurs numériques
   # --------------------------------------------------------
   
-  prediction <- as.numeric(prediction)
+  prediction <- as.numeric(
+    prediction
+  )
   
   
   # --------------------------------------------------------
   # Vérification
   # --------------------------------------------------------
   
-  if (length(prediction) != 3) {
+  if (
+    length(prediction) != 3
+  ) {
     
     stop(
       paste0(
+        
         "Le modèle n'a pas renvoyé 3 probabilités. ",
+        
         "Nombre obtenu : ",
+        
         length(prediction)
       )
     )
@@ -393,6 +479,7 @@ predire_resultat <- function(
   )
 }
 
+
 # ==========================================================
 # 11. EXEMPLE DE TEST
 # ==========================================================
@@ -402,10 +489,16 @@ predire_resultat <- function(
 # Elle peut être supprimée plus tard si nécessaire.
 
 
+ouverture_test <- "King's Pawn Game: Leonardis Variation"
+
+
 if (
-  "C50" %in%
-  levels(Donnees_modele$opening_eco_modele)
+  ouverture_test %in%
+  levels(
+    Donnees_modele$opening_name_modele
+  )
 ) {
+  
   
   test_prediction <- predire_resultat(
     
@@ -415,7 +508,7 @@ if (
     
     elo_adversaire = 1600,
     
-    opening_eco = "C50"
+    opening_name = ouverture_test
   )
   
   
@@ -436,4 +529,3 @@ if (
   )
   
 }
-

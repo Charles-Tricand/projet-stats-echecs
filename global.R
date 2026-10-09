@@ -8,6 +8,7 @@ library(ggplot2)
 library(readr)
 library(htmltools)
 library(plotly)
+library(nnet)
 
 # Install rchess from GitHub if not already installed
 # remotes::install_github("jbkunst/rchess")
@@ -27,6 +28,8 @@ Donnees_Chess = Donnees_Chess |>
     couleur_desavantage = ifelse(elo_diff > 0,"black",ifelse(elo_diff < 0,"white","egalite")),
     victoire_desavantage = couleur_desavantage == winner
   )
+
+#source("Modele.R")
 
 # Source all R files in the R directory (modules)
 lapply(list.files(path="R", pattern="\\.R$", full.names=TRUE), source)

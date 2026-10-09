@@ -102,15 +102,24 @@ mod_calculateur_ui <- function(id) {
         # Ouverture
         # ----------------------------------------------------
         
-        selectInput(
+        selectizeInput(
           
-          ns("opening_eco"),
+          ns("opening_name"),
           
-          label = "Code ECO de l'ouverture :",
+          label = "Ouverture :",
           
           choices = NULL,
           
-          selected = NULL
+          selected = NULL,
+          
+          options = list(
+            
+            placeholder = "Rechercher une ouverture...",
+            
+            maxOptions = 50,
+            
+            create = FALSE
+          )
         ),
         
         
@@ -184,35 +193,57 @@ mod_calculateur_server <- function(id) {
       
       
       # ======================================================
-      # LISTE DES ECO DISPONIBLES
+      # 1. CREATION DE LA LISTE DES OUVERTURES
       # ======================================================
+      #
+      # Le calculateur utilise directement les noms présents
+      # dans le jeu de données.
+      #
+      # Une ouverture peut apparaître plusieurs fois avec
+      # plusieurs ECO, mais on ne conserve ici qu'un nom unique.
+      #
       
-      observe({
+      ouvertures <- Donnees_Chess |>
         
-        ecos <- levels(
-          Donnees_modele$opening_eco_modele
+        filter(
+          !is.na(opening_name),
+          opening_name != ""
+        ) |>
+        
+        distinct(
+          opening_name
+        ) |>
+        
+        arrange(
+          opening_name
         )
-        
-        updateSelectInput(
-          
-          session,
-          
-          "opening_eco",
-          
-          choices = ecos,
-          
-          selected = if ("C50" %in% ecos) {
-            "C50"
-          } else {
-            ecos[1]
-          }
-        )
-        
-      })
       
       
       # ======================================================
-      # CALCUL
+      # 2. LISTE DANS LA BOITE DE RECHERCHE
+      # ======================================================
+      #
+      # selectize permet à l'utilisateur de taper directement
+      # le nom ou une partie du nom de l'ouverture.
+      #
+      
+      updateSelectizeInput(
+        
+        session,
+        
+        "opening_name",
+        
+        choices = ouvertures$opening_name,
+        
+        selected = NULL,
+        
+        server = TRUE
+        
+      )
+      
+      
+      # ======================================================
+      # 3. CALCUL
       # ======================================================
       
       prediction <- eventReactive(
@@ -225,13 +256,29 @@ mod_calculateur_server <- function(id) {
             input$couleur,
             input$elo_joueur,
             input$elo_adversaire,
-            input$opening_eco
+            input$opening_name
+          )
+          
+          
+          # --------------------------------------------------
+          # Vérification de l'ouverture
+          # --------------------------------------------------
+          
+          ouverture_selectionnee <- input$opening_name
+          
+          
+          req(
+            ouverture_selectionnee %in% ouvertures$opening_name
           )
           
           
           # --------------------------------------------------
           # Appel du modèle
           # --------------------------------------------------
+          #
+          # Le modèle reçoit maintenant directement le nom
+          # de l'ouverture.
+          #
           
           resultat <- predire_resultat(
             
@@ -241,12 +288,12 @@ mod_calculateur_server <- function(id) {
             
             elo_adversaire = input$elo_adversaire,
             
-            opening_eco = input$opening_eco
+            opening_name = ouverture_selectionnee
           )
           
           
           # --------------------------------------------------
-          # Mise en forme
+          # Résultat
           # --------------------------------------------------
           
           resultat
@@ -256,7 +303,7 @@ mod_calculateur_server <- function(id) {
       
       
       # ======================================================
-      # RESUME DES RESULTATS
+      # 4. RESUME DES RESULTATS
       # ======================================================
       
       output$resume <- renderUI({
@@ -297,10 +344,12 @@ mod_calculateur_server <- function(id) {
               ",
               
               paste0(
+                
                 round(
                   resultat$victoire * 100,
                   1
                 ),
+                
                 "%"
               )
             ),
@@ -337,10 +386,12 @@ mod_calculateur_server <- function(id) {
               ",
               
               paste0(
+                
                 round(
                   resultat$nulle * 100,
                   1
                 ),
+                
                 "%"
               )
             ),
@@ -377,10 +428,12 @@ mod_calculateur_server <- function(id) {
               ",
               
               paste0(
+                
                 round(
                   resultat$defaite * 100,
                   1
                 ),
+                
                 "%"
               )
             ),
@@ -402,7 +455,7 @@ mod_calculateur_server <- function(id) {
       
       
       # ======================================================
-      # GRAPHIQUE
+      # 5. GRAPHIQUE
       # ======================================================
       
       output$graphique_probabilites <- renderPlot({
@@ -458,11 +511,14 @@ mod_calculateur_server <- function(id) {
           geom_text(
             
             aes(
+              
               label = paste0(
+                
                 round(
                   probabilite * 100,
                   1
                 ),
+                
                 "%"
               )
             ),
@@ -487,9 +543,12 @@ mod_calculateur_server <- function(id) {
           scale_y_continuous(
             
             limits = c(
+              
               0,
+              
               max(
                 1,
+                
                 max(
                   donnees_graphique$probabilite
                 ) * 1.15
@@ -497,6 +556,7 @@ mod_calculateur_server <- function(id) {
             ),
             
             labels = function(x) {
+              
               paste0(
                 x * 100,
                 "%"
@@ -522,7 +582,9 @@ mod_calculateur_server <- function(id) {
             legend.position = "none",
             
             plot.title = element_text(
+              
               face = "bold",
+              
               hjust = 0.5
             )
           )

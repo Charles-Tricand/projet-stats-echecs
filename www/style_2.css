@@ -1,0 +1,438 @@
+/* ==========================================================
+   THEME 1 — ECHIQUIER CLASSIQUE
+   Palette : ivoire, sable, noyer et brun
+   ========================================================== */
+
+/* ---------- VARIABLES GLOBALES ---------- */
+
+:root {
+  --bg-page: #F5F0E6;
+  --bg-board-light: #F8F4EC;
+  --bg-board-dark: #EAE0D0;
+
+  --bg-card: rgba(255, 253, 248, 0.96);
+  --bg-sidebar: #EEE5D6;
+  --bg-input: #FFFEFB;
+
+  --color-primary: #6F5037;
+  --color-primary-hover: #4E3727;
+  --color-accent: #A47C52;
+
+  --color-text: #34271F;
+  --color-muted: #827363;
+  --color-border: #DCCDB9;
+
+  --shadow-card: 0 5px 18px rgba(64, 43, 26, 0.07);
+  --radius-card: 12px;
+}
+
+/* ---------- FOND GENERAL ---------- */
+
+html {
+  min-height: 100%;
+}
+
+/* ---------- FOND GENERAL : ECHIQUIER DISCRET ---------- */
+
+body {
+  color: var(--color-text);
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+
+  background-color: #F5F0E6;
+
+  background-image:
+    linear-gradient(
+      45deg,
+      rgba(164, 139, 106, 0.10) 25%,
+      transparent 25%,
+      transparent 75%,
+      rgba(164, 139, 106, 0.10) 75%
+    ),
+    linear-gradient(
+      45deg,
+      rgba(164, 139, 106, 0.10) 25%,
+      transparent 25%,
+      transparent 75%,
+      rgba(164, 139, 106, 0.10) 75%
+    );
+
+  background-size: 120px 120px;
+  background-position: 0 0, 60px 60px;
+  background-attachment: fixed;
+}
+
+/* ---------- CONTENEUR PRINCIPAL ---------- */
+
+.container-fluid {
+  padding: 24px 32px 36px;
+}
+
+/* ---------- TITRE PRINCIPAL ---------- */
+
+h1 {
+  color: var(--color-primary-hover);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+
+  margin-top: 10px;
+  margin-bottom: 28px;
+  padding-bottom: 18px;
+
+  border-bottom: 2px solid var(--color-border);
+}
+
+h1::before {
+  content: "\265A";
+  color: var(--color-primary);
+  margin-right: 12px;
+  font-size: 0.95em;
+}
+
+h2 {
+  color: var(--color-primary-hover);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 25px;
+  font-weight: 600;
+  margin-top: 12px;
+  margin-bottom: 22px;
+}
+
+h3, h4 {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* ---------- ONGLETS PRINCIPAUX ET SECONDAIRES ---------- */
+
+.nav-tabs {
+  border-bottom: 2px solid var(--color-border);
+  margin-bottom: 24px;
+}
+
+.nav-tabs > li {
+  margin-bottom: -2px;
+}
+
+.nav-tabs > li > a {
+  color: var(--color-muted);
+  font-weight: 600;
+  padding: 13px 18px;
+  border: 1px solid transparent;
+  border-radius: 9px 9px 0 0;
+  transition: color 0.2s, background-color 0.2s;
+}
+
+.nav-tabs > li > a:hover {
+  color: var(--color-primary-hover);
+  background-color: rgba(255, 253, 248, 0.75);
+  border-color: transparent;
+}
+
+.nav-tabs > li.active > a,
+.nav-tabs > li.active > a:hover,
+.nav-tabs > li.active > a:focus {
+  color: var(--color-primary-hover);
+  background-color: #FFFDF8;
+  border: 1px solid var(--color-border);
+  border-bottom: 2px solid #FFFDF8;
+}
+
+/* ---------- PANNEAUX ET ZONES DE CONTENU ---------- */
+
+.main-panel,
+.tab-content {
+  min-width: 0;
+}
+
+.tab-content {
+  background: rgba(255, 253, 248, 0.88);
+  border: 1px solid rgba(220, 205, 185, 0.75);
+  border-radius: var(--radius-card);
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+}
+
+/* ---------- PANNEAU LATERAL ---------- */
+
+.well {
+  background: var(--bg-sidebar);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: none;
+  padding: 22px;
+}
+
+.well h3,
+.well h4 {
+  margin-top: 4px;
+  margin-bottom: 20px;
+}
+
+/* ---------- LIBELLES ET FILTRES ---------- */
+
+label,
+.control-label {
+  color: var(--color-text);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.form-group {
+  margin-bottom: 22px;
+}
+
+.form-control {
+  color: var(--color-text);
+  background-color: var(--bg-input);
+  border: 1px solid #D5C5AF;
+  border-radius: 7px;
+  box-shadow: none;
+  min-height: 38px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(164, 124, 82, 0.14);
+  outline: none;
+}
+
+/* Boutons radio et cases à cocher */
+
+.radio,
+.checkbox {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.radio label,
+.checkbox label {
+  font-weight: 400;
+  cursor: pointer;
+}
+
+/* ---------- CURSEURS ---------- */
+
+.irs--shiny .irs-bar,
+.irs--shiny .irs-bar-edge {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.irs--shiny .irs-handle {
+  border-color: var(--color-primary);
+}
+
+.irs--shiny .irs-from,
+.irs--shiny .irs-to,
+.irs--shiny .irs-single {
+  background: var(--color-primary);
+}
+
+.irs--shiny .irs-from::before,
+.irs--shiny .irs-to::before,
+.irs--shiny .irs-single::before {
+  border-top-color: var(--color-primary);
+}
+
+/* ---------- BOUTONS ---------- */
+
+.btn {
+  border-radius: 7px;
+  font-weight: 600;
+  padding: 9px 16px;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.btn-default {
+  color: var(--color-primary-hover);
+  background: #FFFDF8;
+  border-color: var(--color-border);
+}
+
+.btn-default:hover,
+.btn-default:focus {
+  color: #FFFDF8;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* ---------- GRAPHIQUES ---------- */
+
+.plotly,
+.plot-container,
+.html-widget {
+  max-width: 100%;
+}
+
+.js-plotly-plot {
+  border-radius: 8px;
+}
+
+svg text {
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ---------- TABLEAUX ---------- */
+
+.table {
+  background: #FFFDF8;
+  border-radius: 8px;
+}
+
+.table > thead > tr > th {
+  color: var(--color-primary-hover);
+  background: var(--bg-sidebar);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.table > tbody > tr > td {
+  border-top: 1px solid #EAE0D0;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) {
+  background-color: #F8F4EC;
+}
+
+/* ---------- SEPARATEURS ET TEXTES SECONDAIRES ---------- */
+
+hr {
+  border-top: 1px solid var(--color-border);
+}
+
+.help-block,
+.text-muted {
+  color: var(--color-muted);
+}
+
+/* ---------- ADAPTATION AUX PETITS ECRANS ---------- */
+
+@media (max-width: 768px) {
+  .container-fluid {
+    padding: 14px;
+  }
+
+  h1 {
+    font-size: 27px;
+    margin-bottom: 20px;
+  }
+
+  h2 {
+    font-size: 22px;
+  }
+
+  .tab-content {
+    padding: 15px;
+  }
+
+  .nav-tabs > li > a {
+    padding: 10px 12px;
+  }
+}
+
+/* ==========================================================
+   BOUTON D'AIDE DES GRAPHIQUES
+   ========================================================== */
+
+.graphique-entete {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.btn-aide-graphique {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 36px;
+  height: 36px;
+  padding: 0;
+
+  color: #6F5037;
+  background-color: #F5F0E6;
+  border: 1px solid #DCCDB9;
+  border-radius: 50%;
+
+  box-shadow: 0 2px 5px rgba(64, 43, 26, 0.06);
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.btn-aide-graphique:hover,
+.btn-aide-graphique:focus {
+  color: #FFFFFF;
+  background-color: #6F5037;
+  border-color: #6F5037;
+  box-shadow: 0 3px 8px rgba(64, 43, 26, 0.15);
+}
+
+.btn-aide-graphique:focus-visible {
+  outline: 2px solid #A47C52;
+  outline-offset: 3px;
+}
+
+/* ==========================================================
+   FENETRE D'AIDE
+   ========================================================== */
+
+.modal-content {
+  color: #34271F;
+  background: #FFFDF8;
+  border: 1px solid #DCCDB9;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(52, 39, 31, 0.18);
+  overflow: hidden;
+}
+
+.modal-header {
+  background: #F0E7D9;
+  border-bottom: 1px solid #DCCDB9;
+  padding: 18px 22px;
+}
+
+.modal-title {
+  color: #4E3727;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 21px;
+  font-weight: 600;
+}
+
+.modal-body {
+  padding: 24px;
+  line-height: 1.7;
+}
+
+.modal-body h4 {
+  color: #6F5037;
+  font-size: 16px;
+  font-weight: 700;
+  margin-top: 18px;
+  margin-bottom: 8px;
+}
+
+.modal-body h4:first-child {
+  margin-top: 0;
+}
+
+.modal-body ul {
+  padding-left: 22px;
+}
+
+.modal-body li {
+  margin-bottom: 8px;
+}
+
+.modal-footer {
+  background: #FAF6EF;
+  border-top: 1px solid #E5D9C8;
+  padding: 14px 22px;
+}
