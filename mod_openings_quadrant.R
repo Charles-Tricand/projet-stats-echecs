@@ -155,11 +155,13 @@ mod_openings_quadrant_server <- function(id) {
           base_size = 13
         ) +
         
+        
         theme(
           plot.title = element_text(
             hjust = 0.5,
             size = 18,
-            face = "bold"
+            face = "bold",
+            family = "Times"
           ),
           panel.grid = element_blank(),
           axis.title = element_text(
