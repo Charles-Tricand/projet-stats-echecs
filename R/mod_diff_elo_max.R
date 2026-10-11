@@ -13,11 +13,11 @@ mod_diff_elo_max_ui <- function(id) {
       sidebarPanel(
         
         sliderInput(
-          ns("diff_elo_max"),
-          label = "Différence d'Elo maximale :",
-          min = 100,
-          max = 2000,
-          value = 400,
+          ns("diff_elo"),
+          label = "Intervalle de différence d'Elo :",
+          min = 0,
+          max = max(Donnees_Chess$elo_diff_abs, na.rm = TRUE),
+          value = c(0, 400),
           step = 100
         ),
         
@@ -25,11 +25,11 @@ mod_diff_elo_max_ui <- function(id) {
           ns("couleur_desavantage"),
           label = "Joueur désavantagé :",
           choices = c(
-            "Les deux" = "tous",
+            "Noirs" = "black",
             "Blancs" = "white",
-            "Noirs" = "black"
+            "Les deux" = "tous"
           ),
-          selected = "tous"
+          selected = "black"
         )
         
       ),
@@ -70,8 +70,8 @@ mod_diff_elo_max_server <- function(id) {
     parties_filtrees <- reactive({
       
       donnees <- Donnees_Chess[
-        Donnees_Chess$elo_diff_abs <= input$diff_elo_max &
-          Donnees_Chess$elo_diff_abs > 0,
+        Donnees_Chess$elo_diff_abs >= input$diff_elo[1] &
+          Donnees_Chess$elo_diff_abs <= input$diff_elo[2],
       ]
       
       # --------------------------------------------------------
@@ -545,8 +545,10 @@ mod_diff_elo_max_server <- function(id) {
         labs(
           title = titre,
           subtitle = paste0(
-            "Parties avec une différence d'Elo maximale de ",
-            input$diff_elo_max,
+            "Parties avec une différence d'Elo comprise entre ",
+            input$diff_elo[1],
+            " et ",
+            input$diff_elo[2],
             " points"
           )
         ) +

@@ -29,9 +29,22 @@ mod_nb_coups_ui <- function(id) {
       
       
       mainPanel(
+        div(
+          class = "graphique-entete",
+          
+          actionButton(
+            inputId = ns("aide_graphique"),
+            label = NULL,
+            icon = icon("question-circle"),
+            title = "Comprendre ce graphique",
+            class = "btn-aide-graphique"
+          )
+        ),
+        
         plotlyOutput(
           ns("graphique_temps_elo"),
-          height = "600px")
+          height = "600px"
+        )
       )
     )
   )
@@ -46,7 +59,6 @@ mod_nb_coups_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     
     output$graphique_temps_elo <- renderPlotly({
-      
       
       # ======================================================
       # 1. FILTRAGE DES PARTIES
@@ -268,6 +280,88 @@ mod_nb_coups_server <- function(id) {
           )
           
         )
+      
+    })
+    
+    # ======================================================
+    # AIDE A L'INTERPRETATION DU GRAPHIQUE
+    # ======================================================
+    
+    observeEvent(input$aide_graphique, {
+      
+      showModal(
+        
+        modalDialog(
+          
+          title = tagList(
+            icon("book-open"),
+            " Comprendre le nombre moyen de coups"
+          ),
+          
+          tags$h4("Objectif du graphique"),
+          
+          p(
+            "Ce graphique étudie la relation entre le niveau des joueurs ",
+            "et le nombre moyen de coups joués au cours d'une partie."
+          ),
+          
+          tags$h4("Comment lire le graphique ?"),
+          
+          tags$ul(
+            tags$li(
+              strong("Axe horizontal : "),
+              "le niveau moyen des deux joueurs, ou la différence ",
+              "absolue entre leurs classements Elo, selon la variable sélectionnée."
+            ),
+            
+            tags$li(
+              strong("Axe vertical : "),
+              "le nombre moyen de coups joués dans les parties du groupe."
+            ),
+            
+            tags$li(
+              strong("Taille des points : "),
+              "le nombre de parties représentées dans chaque groupe. ",
+              "Un point plus grand correspond à davantage de parties."
+            ),
+            
+            tags$li(
+              strong("Ligne horizontale en pointillés : "),
+              "le nombre moyen de coups calculé sur l'ensemble des parties ",
+              "retenues après application du filtre."
+            )
+          ),
+          
+          tags$h4("Comment interpréter les résultats ?"),
+          
+          p(
+            "Un point situé au-dessus de la ligne correspond à un groupe ",
+            "dont les parties durent en moyenne plus longtemps, en nombre ",
+            "de coups, que l'ensemble des parties filtrées. ",
+            "Un point situé en dessous correspond à des parties plus courtes."
+          ),
+          
+          p(
+            "La relation observée décrit une association statistique : ",
+            "elle ne permet pas, à elle seule, de conclure à une relation ",
+            "de causalité."
+          ),
+          
+          tags$h4("Attention au filtre"),
+          
+          p(
+            "Le curseur limite la différence absolue d'Elo entre les joueurs. ",
+            "Lorsque sa valeur change, les parties retenues et la moyenne ",
+            "générale peuvent également changer."
+          ),
+          
+          easyClose = TRUE,
+          
+          footer = modalButton("Fermer"),
+          
+          size = "m"
+        )
+      )
       
     })
     

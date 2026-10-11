@@ -33,6 +33,11 @@ mod_elo_victory_ui <- function(id) {
   )
 }
 
+
+
+
+
+
 mod_elo_victory_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     output$graphique_elo <- renderPlot({
