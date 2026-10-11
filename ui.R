@@ -46,13 +46,13 @@ fluidPage(
     tabPanel(
       "Statistiques Descriptives de base",
       tabsetPanel(
-        #mod_elo_victory_ui("elo_victory_tab"),
+        mod_elo_victory_ui("elo_victory_tab"),
         mod_nb_coups_ui("nb_coups_tab"),
         mod_issue_parties_ui("issue_parties_tab"),
         mod_diff_elo_max_ui("diff_elo_max_tab"),
         mod_calculateur_ui("calculateur_tab"),
         mod_openings_elo_ui("openings_elo_tab"),
-        mod_openings_quadrant_ui("openings_quadrant_tab")
+        mod_openings_quadrant_ui("openings_quadrant_tab"),
         mod_echiquier_interactif_ui("echiquier_interactif_tab"),
         mod_probabilite_elo_ui("probabilite_elo_tab")
       )

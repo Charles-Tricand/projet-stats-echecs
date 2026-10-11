@@ -1,100 +1,60 @@
+library(stockfish)
+library(rchess)
+
 stockfish_path <- "stockfish/stockfish-linux-x86-64-universal"
 
 file.exists(stockfish_path)
 file.access(stockfish_path, mode = 1)
 
+engine <- fish$new()
 
-# Fonction pour analyser une séquence de coups avec Stockfish
-# Retourne l'évaluation (score en centipawns) après chaque coup
-analyser_partie_stockfish <- function(moves_san, profondeur = 10) {
-  # Initialiser une nouvelle partie
-  game_obj <- game()
-  
-  # Séparer les coups
-  moves_list <- strsplit(moves_san, " ")[[1]]
-  
-  # Stock pour les résultats
-  evaluations <- list()
-  
-  for (i in seq_along(moves_list)) {
-    move_san <- moves_list[i]
-    
-    tryCatch({
-      # Parser le coup en notation SAN dans le contexte de la position actuelle
-      parsed_move <- parse_move(game_obj, move_san)
-      
-      if (is.null(parsed_move)) {
-        # Coup invalide
-        evaluations[[i]] <- list(
-          move_number = i,
-          san = move_san,
-          uci = NA,
-          evaluation = NA,
-          error = "Coup invalide"
-        )
-        next
-      }
-      
-      # Appliquer le coup à la partie
-      game_obj <- move(game_obj, parsed_move)
-      
-      # Obtenir la position actuelle en format FEN
-      fen_position <- fen(game_obj)
-      
-      # Créer une nouvelle instance de Stockfish pour cette position
-      # (Ou réutiliser la même instance en définissant la position)
-      fish <- stockfish::fish$new(stockfish_path)
-      
-      # Définir la position Stockfish using FEN
-      fish$position(position = fen_position, type = "fen")
-      
-      # Obtenir l'évaluation de Stockfish
-      result <- fish$go(depth = profondeur)
-      
-      # Extraire le score centipawns de la sortie
-      score_cp <- NA
-      if (length(result) > 0) {
-        # Chercher la ligne avec le score
-        score_line <- grep("score cp", result, value = TRUE)
-        if (length(score_line) > 0) {
-          # Extraire le nombre après "score cp"
-          score_parts <- unlist(strsplit(score_line, " "))
-          cp_index <- which(score_parts == "cp")
-          if (length(cp_index) > 0 && cp_index < length(score_parts)) {
-            score_cp <- as.numeric(score_parts[cp_index + 1])
-          }
-        }
-      }
-      
-      evaluations[[i]] <- list(
-        move_number = i,
-        san = move_san,
-        uci = as.uci(parsed_move),  # Convertir le coup parsé en UCI
-        evaluation = score_cp,
-        error = NA
-      )
-      
-    }, error = function(e) {
-      evaluations[[i]] <- list(
-        move_number = i,
-        san = move_san,
-        uci = NA,
-        evaluation = NA,
-        error = as.character(e)
-      )
-    })
-  }
-  
-  # Convertir en data frame
-  results_df <- bind_rows(lapply(evaluations, as.data.frame))
-  return(results_df)
+# 1. Séquence de coups de l'ouverture pour chaque partie
+Donnees_Chess <- Donnees_Chess |>
+  mutate(
+    moves_opening = vapply(seq_len(n()), function(i) {
+      coups <- strsplit(trimws(moves[i]), "\\s+")[[1]]
+      paste(coups[seq_len(min(opening_ply[i], length(coups)))], collapse = " ")
+    }, character(1))
+  )
+
+# 2. Séquences distinctes uniquement
+ouvertures <- distinct(Donnees_Chess, moves_opening) #environ 10 fois moins d'entrées
+
+# 3. FEN de la position finale de chaque séquence
+fen_finale <- function(seq_coups) {
+  ch <- Chess$new()
+  for (m in strsplit(seq_coups, " ")[[1]]) ch$move(m) # on joue les coups de la séquence pour obtenir le plateau final
+  ch$fen()
 }
 
-# Exemple d'utilisation:
-# Pour analyser les premières parties du dataset:
-#
-exemple_moves <- Donnees_Chess_processed$moves[1]
-print(paste("Coups de la première partie:", exemple_moves))
-#
-analyse <- analyser_partie_stockfish(exemple_moves, profondeur = 5)
-print(analyse)
+ouvertures$fen <- vapply(ouvertures$moves_opening, fen_finale, character(1))
+
+# 4. Évaluation Stockfish
+
+score_position <- function(fen, depth = 6) {
+  i <<- i+1
+  print(paste(i, "/", nrow(ouvertures)))
+  engine$run(paste("position fen", fen))
+  engine$run(paste("go depth", depth))
+  out <- engine$output
+  # dernière ligne "info ... score cp X" ou "score mate N"
+  info <- tail(grep("score (cp|mate)", out, value = TRUE), 1)
+  if (grepl("score mate", info)) {
+    n <- as.integer(sub(".*score mate (-?[0-9]+).*", "\\1", info))
+    val <- sign(n) * 10000          # convention à ajuster pour les mats
+  } else {
+    val <- as.integer(sub(".*score cp (-?[0-9]+).*", "\\1", info))
+  }
+  # point de vue des blancs
+  if (grepl(" b ", fen)) val <- -val
+  val
+}
+
+i=0
+ouvertures$eval_opening <- vapply(ouvertures$fen, score_position,
+                                  numeric(1), depth = 6)
+
+# 5. Report sur toutes les parties
+Donnees_Chess <- left_join(Donnees_Chess, ouvertures, by = "moves_opening")
+
+write.csv(Donnees_Chess, "Donnees_Chess.csv", row.names = FALSE)

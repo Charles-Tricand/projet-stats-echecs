@@ -10,8 +10,6 @@ library(htmltools)
 library(plotly)
 library(nnet)
 library(ggrepel)
-# Install rchess from GitHub if not already installed
-# remotes::install_github("jbkunst/rchess")
 
 # Load and preprocess the chess dataset
 Donnees_Chess <- read_csv("Donnees_Chess.csv")
@@ -40,5 +38,4 @@ Donnees_Chess = Donnees_Chess |>
 
 source("Modele.R")
 
-# Source all R files in the R directory (modules)
 lapply(list.files(path="R", pattern="\\.R$", full.names=TRUE), source)

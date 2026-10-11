@@ -17,6 +17,9 @@
 # - Un nœud dont toutes les parties appartiennent à une seule famille n'est
 #   pas développé davantage : l'arbre reste lisible.
 # - L'arbre affiché part de la position courante et se restreint à chaque coup.
+# - Les noms d'ouverture sont des liens : un clic remet l'échiquier au départ et
+#   rejoue la ligne correspondante (celle de la branche pour une famille unique,
+#   sinon la ligne la plus fréquente de la famille parmi les parties restantes).
 #
 # Dépendances : rchess (remotes::install_github("jbkunst/rchess")) et l'objet
 # `Donnees_Chess` (colonnes moves, opening_eco, opening_name, opening_ply).
@@ -53,6 +56,8 @@ css_echiquier_interactif <- "
 .arbre-fam { color: #337ab7; }
 .arbre-fam.pur { color: #2e7d32; font-weight: bold; }
 .arbre-reste { color: #999; font-style: italic; }
+.arbre-panneau a.lien-ouverture { color: inherit; cursor: pointer; text-decoration: underline dotted; }
+.arbre-panneau a.lien-ouverture:hover { text-decoration: underline; }
 "
 
 js_echiquier_interactif <- r"---(
@@ -110,6 +115,17 @@ js_echiquier_interactif <- r"---(
   function redimensionner() {
     $.each(plateaux, function(id, e) { e.board.resize(); surligner(id); });
   }
+  // Clic sur un nom d'ouverture : on envoie la ligne de coups au serveur
+  $(document).on('click', '.lien-ouverture', function(ev) {
+    ev.preventDefault();
+    var champ = $(this).closest('.arbre-panneau').attr('data-input-ligne');
+    var ligne = $(this).attr('data-ligne');
+    if (champ && ligne) {
+      Shiny.setInputValue(champ, { ligne: ligne, nonce: Math.random() },
+                          { priority: 'event' });
+    }
+  });
+
   $(window).on('resize', redimensionner);
   $(document).on('shown.bs.tab', redimensionner);
 })();
@@ -149,6 +165,21 @@ jouer_coup <- function(jeu, fen, de, vers) {
   san <- as.character(candidats$san[1])
   jeu$move(san)
   list(san = san, fen = jeu$fen())
+}
+
+# Joue le coup `san` (ex. "Nf3") dans la position `fen`.
+# Renvoie list(san, fen, de, vers) ou NULL si ce coup n'est pas légal.
+jouer_san <- function(jeu, fen, san) {
+  jeu$load(fen)
+  legaux <- jeu$moves(verbose = TRUE)
+  if (is.null(legaux) || NROW(legaux) == 0) return(NULL)
+  nettoyer <- function(x) sub("[+#]$", "", as.character(x))
+  candidats <- legaux[nettoyer(legaux$san) == nettoyer(san), , drop = FALSE]
+  if (nrow(candidats) == 0) return(NULL)
+  coup <- as.character(candidats$san[1])
+  jeu$move(coup)
+  list(san = coup, fen = jeu$fen(),
+       de = as.character(candidats$from[1]), vers = as.character(candidats$to[1]))
 }
 
 # ---- Arbre des ouvertures --------------------------------------------------------
@@ -215,8 +246,14 @@ construire_arbre <- function(donnees) {
   terminaux <- lapply(split(noms[jeu[idx]], cle[idx]), compter)
   eco_nom <- vapply(split(eco, noms), function(x) x[1], character(1))
 
+  # Lignes d'ouverture : une par nœud terminal, avec sa famille et sa fréquence
+  tt <- table(cle[idx])
+  premier <- match(names(tt), cle[idx])
+  lignes <- data.frame(cle = names(tt), n = as.integer(tt),
+                       famille = fam[idx][premier], stringsAsFactors = FALSE)
+
   list(n = n, cles = names(n), familles = fam_noeud, enfants = enfants,
-       terminaux = terminaux, eco = eco_nom)
+       terminaux = terminaux, eco = eco_nom, lignes = lignes)
 }
 
 # Le calcul se fait une seule fois pour toutes les sessions
@@ -235,12 +272,43 @@ etiquette_coup <- function(ply, coup) {
   else sprintf("%d... %s", ply %/% 2, coup)
 }
 
-resume_familles <- function(fam, max = 3) {
-  if (length(fam) == 1) return(names(fam))
+# "e4 e5 Nf3" -> "1. e4 e5 2. Nf3"
+ligne_texte <- function(ligne) {
+  coups <- strsplit(ligne, " ", fixed = TRUE)[[1]]
+  i <- seq_along(coups)
+  num <- ifelse(i %% 2 == 1, paste0((i + 1) %/% 2, "."), "")
+  paste(trimws(paste(num, coups)), collapse = " ")
+}
+
+# Nom cliquable : un clic joue `ligne` depuis la position de départ
+lien_ouverture <- function(texte, ligne) {
+  if (is.null(ligne) || length(ligne) == 0 || !nzchar(ligne)) return(texte)
+  tags$a(href = "#", class = "lien-ouverture", `data-ligne` = ligne,
+         title = paste("Jouer :", ligne_texte(ligne)), texte)
+}
+
+# Ligne la plus jouée d'une famille parmi les parties passant par le nœud `cle`
+ligne_famille <- function(arbre, cle, famille) {
+  t <- arbre$lignes
+  ok <- t$famille == famille
+  if (cle != RACINE) ok <- ok & (t$cle == cle | startsWith(t$cle, paste0(cle, " ")))
+  if (!any(ok)) return(NULL)
+  t$cle[ok][which.max(t$n[ok])]
+}
+
+# Familles encore possibles sous le nœud `cle`, chacune cliquable
+liens_familles <- function(arbre, cle, fam, max = 3) {
   tete <- head(fam, max)
-  txt <- paste0(names(tete), " (", tete, ")", collapse = ", ")
-  if (length(fam) > max) txt <- paste0(txt, ", … +", length(fam) - max)
-  txt
+  sortie <- list()
+  for (i in seq_along(tete)) {
+    if (i > 1) sortie <- c(sortie, list(", "))
+    f <- names(tete)[i]
+    sortie <- c(sortie, list(
+      lien_ouverture(f, ligne_famille(arbre, cle, f)),
+      paste0(" (", tete[[i]], ")")))
+  }
+  if (length(fam) > max) sortie <- c(sortie, list(paste0(", … +", length(fam) - max)))
+  tagList(sortie)
 }
 
 # Branches sous le nœud `cle`. Un nœud dont toutes les parties relèvent d'une
@@ -258,7 +326,11 @@ rendre_branches <- function(arbre, cle, ply_base, niveau = 1, profondeur_max = 3
     tags$li(
       tags$span(class = "arbre-coup", etiquette_coup(ply_base + niveau, vus$coup[i])),
       tags$span(class = "arbre-n", vus$n[i]),
-      tags$span(class = paste("arbre-fam", if (pur) "pur"), resume_familles(fam)),
+      tags$span(
+        class = paste("arbre-fam", if (pur) "pur"),
+        if (pur) lien_ouverture(names(fam), vus$cle[i])   # ligne menant à ce nœud
+        else liens_familles(arbre, vus$cle[i], fam)
+      ),
       if (!pur) rendre_branches(arbre, vus$cle[i], ply_base, niveau + 1, profondeur_max)
     )
   })
@@ -306,7 +378,8 @@ mod_echiquier_interactif_ui <- function(id) {
       column(
         4,
         h4("Arbre des ouvertures"),
-        div(class = "arbre-panneau", uiOutput(ns("arbre")))
+        div(class = "arbre-panneau", `data-input-ligne` = ns("ligne"),
+            uiOutput(ns("arbre")))
       )
     ),
     # Le script est dans le corps de la page, après le chargement de Shiny
@@ -378,6 +451,29 @@ mod_echiquier_interactif_server <- function(id, donnees = Donnees_Chess) {
 
     observeEvent(input$recommencer, hist(partie_initiale()))
 
+    # Clic sur un nom d'ouverture : on repart du début et on rejoue sa ligne
+    observeEvent(input$ligne, {
+      coups <- strsplit(input$ligne$ligne, " ", fixed = TRUE)[[1]]
+      req(length(coups) > 0)
+
+      h <- partie_initiale()
+      fen <- fen_depart
+      for (san in coups) {
+        res <- tryCatch(jouer_san(jeu, fen, san), error = function(e) NULL)
+        if (is.null(res)) {
+          showNotification("Cette ligne n'a pas pu être jouée en entier.",
+                           type = "warning", duration = 3)
+          break
+        }
+        fen <- res$fen
+        h$fens <- c(h$fens, res$fen)
+        h$sans <- c(h$sans, res$san)
+        h$de   <- c(h$de, res$de)
+        h$vers <- c(h$vers, res$vers)
+      }
+      hist(h)
+    })
+
     output$liste_coups <- renderUI({
       san <- hist()$sans
       if (length(san) == 0) return(helpText("Aucun coup joué pour l'instant."))
@@ -414,7 +510,7 @@ mod_echiquier_interactif_server <- function(id, donnees = Donnees_Chess) {
         nom <- names(reconnue$noms)[1]
         autres <- names(reconnue$noms)[-1]
         div(class = "arbre-ouverture",
-            tags$strong(nom),
+            tags$strong(lien_ouverture(nom, cle_de(reconnue$k))),
             sprintf(" (ECO %s)", arbre$eco[[nom]]),
             if (reconnue$k < n_coups)
               tags$div(sprintf("reconnue après %s", etiquette_coup(reconnue$k, sans[reconnue$k]))),

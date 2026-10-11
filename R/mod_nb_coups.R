@@ -12,20 +12,10 @@ mod_nb_coups_ui <- function(id) {
           label = "Variable étudiée :",
           choices = c(
             "Elo moyen de la partie" = "elo_moyen",
-            "Différence d'Elo" = "elo_diff"
-          ),
+            "Différence d'Elo" = "elo_diff"),
           selected = "elo_moyen"
+          )
         ),
-        
-        sliderInput(
-          inputId = ns("diff_elo_max"),
-          label = "Différence maximale d'Elo entre les joueurs :",
-          min = 0,
-          max = 1000,
-          value = 400,
-          step = 50
-        )
-      ),
       
       
       mainPanel(
@@ -55,52 +45,9 @@ mod_nb_coups_ui <- function(id) {
 
 
 mod_nb_coups_server <- function(id) {
-  
   moduleServer(id, function(input, output, session) {
-    
     output$graphique_temps_elo <- renderPlotly({
-      
-      # ======================================================
-      # 1. FILTRAGE DES PARTIES
-      # ======================================================
-      
-      Donnees_filtrees <- Donnees_Chess |>
-        filter(elo_diff_abs <= input$diff_elo_max)
-      
-      
-      # ======================================================
-      # 2. VERIFICATION
-      # ======================================================
-      
-      if (nrow(Donnees_filtrees) == 0) {
-        
-        return(
-          plotly_empty() |>
-            layout(
-              annotations = list(
-                text = "Aucune partie ne correspond aux critères sélectionnés.",
-                x = 0.5,
-                y = 0.5,
-                showarrow = FALSE
-              )
-            )
-        )
-      }
-      
-      
-      # ======================================================
-      # 3. MOYENNE GENERALE
-      # ======================================================
-      
-      moyenne_generale <- mean(
-        Donnees_filtrees$turns,
-        na.rm = TRUE
-      )
-      
-      
-      # ======================================================
-      # 4. CHOIX DE LA VARIABLE
-      # ======================================================
+      moyenne_generale <- mean(Donnees_Chess$turns,na.rm = TRUE)
       
       if (input$variable_x == "elo_moyen") {
         
@@ -109,29 +56,21 @@ mod_nb_coups_server <- function(id) {
         # MODE : ELO MOYEN
         # ----------------------------------------------------
         
-        Donnees_graphique <- Donnees_filtrees |>
-          mutate(elo_classe = cut(
+        Donnees_graphique <- Donnees_Chess |>
+          group_by(cut(
             elo_moyen,
             breaks = seq(
               floor(min(elo_moyen,na.rm = TRUE) / 100) * 100, 
               ceiling(max(elo_moyen, na.rm = TRUE) / 100) * 100,
               by = 100),
             include.lowest = TRUE)) |>
-          
-          group_by(elo_classe) |>
-          
           summarise(
             valeur_moyenne = mean(elo_moyen, na.rm = TRUE),
             coups_moyens = mean(turns,na.rm = TRUE),
             nombre_parties = n(),
             .groups = "drop") |>
-          
           filter(!is.na(valeur_moyenne))
         titre <- "Nombre moyen de coups selon l'Elo moyen"
-        sous_titre <- paste0(
-          "Parties avec une différence d'Elo ≤ ",
-          input$diff_elo_max,
-          " points")
         nom_x <- "Elo moyen de la partie"
         } 
       else {
@@ -141,13 +80,11 @@ mod_nb_coups_server <- function(id) {
         # MODE : DIFFERENCE D'ELO
         # ====================================================
         
-        Donnees_graphique <- Donnees_filtrees |>
-          mutate(
-            elo_diff_classe = cut(
-              elo_diff_abs,
-              breaks = seq(0,ceiling(max(elo_diff_abs,na.rm = TRUE) / 100) * 100,by = 100),
-              include.lowest = TRUE)) |>
-          group_by(elo_diff_classe) |>
+        Donnees_graphique <- Donnees_Chess |>
+          group_by(cut(
+            elo_diff_abs,
+            breaks = seq(0,ceiling(max(elo_diff_abs,na.rm = TRUE) / 100) * 100,by = 100),
+            include.lowest = TRUE)) |>
           summarise(
             valeur_moyenne = mean(elo_diff_abs, na.rm = TRUE),
             coups_moyens = mean(turns, na.rm = TRUE),
@@ -156,7 +93,6 @@ mod_nb_coups_server <- function(id) {
           filter(!is.na(valeur_moyenne))
 
         titre <- "Nombre moyen de coups selon la différence d'Elo"
-        sous_titre <- paste0("Parties avec une différence d'Elo ≤ ", input$diff_elo_max, " points")
         nom_x <- "Différence d'Elo"
       }
       
@@ -165,10 +101,7 @@ mod_nb_coups_server <- function(id) {
       # 5. INFORMATIONS POUR LE SURVOL
       # ======================================================
       
-      nombre_total <- sum(
-        Donnees_graphique$nombre_parties
-      )
-      
+      nombre_total <- sum(Donnees_graphique$nombre_parties)
       
       Donnees_graphique <- Donnees_graphique |>
         mutate(
@@ -253,7 +186,6 @@ mod_nb_coups_server <- function(id) {
       
       labs(
         title = titre,
-        subtitle = sous_titre,
         x = nom_x,
         y = "Nombre moyen de coups") +
         
