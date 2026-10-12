@@ -436,3 +436,21 @@ hr {
   border-top: 1px solid #E5D9C8;
   padding: 14px 22px;
 }
+
+/* Formules mathématiques du guide des échecs */
+.guide-echecs .guide-formule {
+  margin: 1rem 0;
+  text-align: center;
+  font-weight: bold;
+  overflow-x: auto;
+}
+
+/* Éviter que les formules débordent sur les petits écrans */
+.guide-echecs .guide-formule mjx-container {
+  max-width: 100%;
+}
+
+/* Espacement des paragraphes du guide */
+.guide-echecs .guide-section p {
+  line-height: 1.7;
+}
