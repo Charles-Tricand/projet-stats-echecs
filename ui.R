@@ -57,7 +57,9 @@ fluidPage(
       "Accueil",
       value = "accueil",
       h1("Initiation aux statistiques sur les échecs"),
-      p(class = "sous-titre-accueil", "Comment l’opening, l’elo et la couleur déterminent le déroulement et l’issue d’une partie d'echec ?")
+      p(class = "sous-titre-accueil", "Comment l’opening, l’elo et la couleur déterminent le déroulement et l’issue d’une partie d'echec ?"),
+      div(style = "text-align: center;",
+          img(src = "echecs.png", width = "400px"))
     ),
     
     tabPanel(
