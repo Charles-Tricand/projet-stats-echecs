@@ -1,5 +1,5 @@
 # ==========================================================
-# MODULE : PROBABILITÉ DE VICTOIRE SELON LA DIFFÉRENCE D'ELO
+# MODULE : COMPARAISON DES SCORES ATTENDUS ELO / GLICKO-2
 # ==========================================================
 
 
@@ -20,48 +20,83 @@ mod_probabilite_elo_ui <- function(id) {
     ),
     
     p(
-      "Comparaison entre la probabilité théorique de victoire du joueur
-      le mieux classé et les résultats observés dans les parties du jeu de données."
+      "texteeeeeeeeeeeeeeeeeeeeeeeee"
     ),
     
     sidebarLayout(
       
       sidebarPanel(
         
+        # --------------------------------------------------
+        # CHOIX DU MODÈLE THÉORIQUE
+        # --------------------------------------------------
+        
+        radioButtons(
+          
+          inputId = ns("modele"),
+          
+          label = "Système de classement à afficher :",
+          
+          choices = c(
+            "Elo classique" = "elo",
+            "Glicko-2" = "glicko2",
+            "Les deux" = "both"
+          ),
+          
+          selected = "both"
+        ),
+        
+        # --------------------------------------------------
+        # PARAMÈTRE GLICKO-2
+        # --------------------------------------------------
+        
+        # conditionalPanel(
+        #   
+        #   condition = "input.modele == 'glicko2' || input.modele == 'both'",
+        #   
+        #   sliderInput(
+        #     
+        #     inputId = ns("rd"),
+        #     
+        #     label = "Incertitude du classement (RD) :",
+        #     
+        #     min = 30,
+        #     max = 350,
+        #     value = 100,
+        #     step = 10
+        #   ),
+        #   
+        #   helpText(
+        #     "Le RD est exprimé en points de classement. ",
+        #     "Il s'agit d'une hypothèse commune aux joueurs, ",
+        #     "et non de leur RD historique réel."
+        #   ),
+        #   ns = ns
+        # ),
+        # 
+        # hr(),
+        
+        # --------------------------------------------------
+        # TAILLE DES CLASSES
+        # --------------------------------------------------
+        
         sliderInput(
           
-          ns("taille_classe"),
+          inputId = ns("taille_classe"),
           
           label = "Taille des classes de différence d'Elo :",
           
           min = 25,
-          
           max = 200,
-          
-          value = 50,
-          
+          value = 125,
           step = 25
         ),
-        
-        hr(),
-        
-        helpText(
-          "Les parties nulles ne sont pas prises en compte dans le calcul
-          de la probabilité de victoire."
-        ),
-        
-        helpText(
-          "La courbe théorique correspond au modèle Elo classique."
-        )
-        
       ),
       
       mainPanel(
         
-        plotOutput(
-          
+        plotlyOutput(
           ns("graphique_probabilite"),
-          
           height = "650px"
         )
         
@@ -95,38 +130,38 @@ mod_probabilite_elo_server <- function(id) {
           mutate(
             
             # ----------------------------------------------
-            # Différence absolue d'Elo
+            # Différence absolue de classement
             # ----------------------------------------------
             
             elo_diff_abs = abs(
               white_rating - black_rating
             ),
             
-            
             # ----------------------------------------------
-            # Résultat relatif au meilleur joueur
+            # Score obtenu par le joueur le mieux classé
             # ----------------------------------------------
             
-            meilleur_gagne = case_when(
+            score_meilleur = case_when(
               
-              # Blanc mieux classé et Blanc gagne
+              # Partie nulle
+              winner == "draw" ~ 0.5,
+              
+              # Le joueur blanc est mieux classé
               white_rating > black_rating &
-                winner == "white" ~ TRUE,
+                winner == "white" ~ 1,
               
-              # Noir mieux classé et Noir gagne
-              black_rating > white_rating &
-                winner == "black" ~ TRUE,
-              
-              # Blanc mieux classé et Noir gagne
               white_rating > black_rating &
-                winner == "black" ~ FALSE,
+                winner == "black" ~ 0,
               
-              # Noir mieux classé et Blanc gagne
+              # Le joueur noir est mieux classé
               black_rating > white_rating &
-                winner == "white" ~ FALSE,
+                winner == "black" ~ 1,
               
-              # Égalité Elo ou partie nulle
-              TRUE ~ NA
+              black_rating > white_rating &
+                winner == "white" ~ 0,
+              
+              # Résultat manquant ou non reconnu
+              TRUE ~ NA_real_
             )
           ) %>%
           
@@ -134,13 +169,15 @@ mod_probabilite_elo_server <- function(id) {
             
             !is.na(elo_diff_abs),
             
-            elo_diff_abs > 0
+            elo_diff_abs > 0,
+            
+            !is.na(score_meilleur)
           )
       })
       
       
       # ====================================================
-      # DONNÉES EMPIRIQUES
+      # 3. DONNÉES EMPIRIQUES
       # ====================================================
       
       donnees_empiriques <- reactive({
@@ -149,100 +186,59 @@ mod_probabilite_elo_server <- function(id) {
         
         taille <- input$taille_classe
         
-        
-        # --------------------------------------------------
-        # Création de la classe directement à partir de
-        # la différence d'Elo
-        # --------------------------------------------------
-        
-        data <- data %>%
-          
-          mutate(
-            
-            borne_inferieure =
-              floor(
-                elo_diff_abs / taille
-              ) * taille
-            
+        validate(
+          need(
+            nrow(data) > 0,
+            "Aucune partie exploitable dans les données."
           )
-        
-        
-        # --------------------------------------------------
-        # Résumé par classe
-        # --------------------------------------------------
+        )
         
         data %>%
-          
-          group_by(
-            borne_inferieure
+          mutate(
+            borne_inferieure =
+              floor(elo_diff_abs / taille) * taille
           ) %>%
-          
+          group_by(borne_inferieure) %>%
           summarise(
-            
-            # Nombre total de parties
             nombre_parties = n(),
             
-            # Nombre de parties décisives
-            parties_decisives = sum(
-              !is.na(meilleur_gagne)
-            ),
-            
-            # Nombre de victoires du meilleur Elo
-            victoires_meilleur = sum(
-              meilleur_gagne == TRUE,
-              na.rm = TRUE
-            ),
-            
-            # Nombre de nulles
-            nulles = sum(
-              winner == "draw",
+            score_observe = mean(
+              score_meilleur,
               na.rm = TRUE
             ),
             
             .groups = "drop"
           ) %>%
-          
           mutate(
+            centre = borne_inferieure + taille / 2,
             
-            # ------------------------------------------------
-            # Probabilité empirique
-            # ------------------------------------------------
-            
-            probabilite =
-              victoires_meilleur /
-              parties_decisives,
-            
-            
-            # ------------------------------------------------
-            # Proportion de nulles
-            # ------------------------------------------------
-            
-            proportion_nulle =
-              nulles /
-              nombre_parties,
-            
-            
-            # ------------------------------------------------
-            # Centre de la classe
-            # ------------------------------------------------
-            
-            centre =
-              borne_inferieure +
-              taille / 2
-          ) %>%
-          
-          filter(
-            parties_decisives > 0,
-            !is.na(probabilite)
+            texte_survol = paste0(
+              "<b>Différence de classement</b> : ",
+              borne_inferieure, "–",
+              borne_inferieure + taille, " points",
+              
+                                  # "<br><b>Score observé</b> : ",
+                                  # scales::percent(
+                                  #   score_observe,
+                                  #   accuracy = 0.1
+                                  # ),
+              
+              "<br><b>Nombre de parties (n)</b> : ",
+              format(
+                nombre_parties,
+                big.mark = " ",
+                scientific = FALSE
+              )
+            )
           )
       })
       
       
       # ====================================================
-      # COURBE THÉORIQUE ELO
+      # 4. COURBES THÉORIQUES
       # ====================================================
       
-      courbe_theorique <- reactive({
+      courbes_theoriques <- reactive({
         
         data <- donnees()
         
@@ -251,98 +247,172 @@ mod_probabilite_elo_server <- function(id) {
           na.rm = TRUE
         )
         
-        tibble(
+        difference <- seq(
+          0,
+          max_diff,
+          by = 1
+        )
+        
+        # --------------------------------------------------
+        # ELO CLASSIQUE
+        # --------------------------------------------------
+        
+        courbe_elo <- tibble(
           
-          difference_elo = seq(
-            0,
-            max_diff,
-            by = 1
-          ),
+          difference_elo = difference,
           
-          probabilite =
-            1 /
-            (
-              1 +
-                10 ^ (
-                  -difference_elo / 400
-                )
-            )
+          score_attendu =
+            1 / (
+              1 + 10 ^ (-difference / 400)
+            ),
+          
+          modele = "Elo classique"
+        )
+        
+        
+        # --------------------------------------------------
+        # GLICKO-2
+        # --------------------------------------------------
+        
+        # Conversion de l'échelle Elo vers l'échelle Glicko-2
+        echelle <- 173.7178
+        
+        # Différence de classement normalisée
+        delta_mu <- difference / echelle
+        
+        # RD commun supposé pour les deux joueurs
+        
+        rd_fixe <- 300
+        
+        phi <- rd_fixe / echelle
+        
+        # phi <- input$rd / echelle
+        
+        # Fonction g(phi) de Glicko-2
+        facteur_g <- 1 / sqrt(
+          1 + 3 * phi^2 / pi^2
+        )
+        
+        courbe_glicko2 <- tibble(
+          
+          difference_elo = difference,
+          
+          score_attendu =
+            1 / (
+              1 + exp(-facteur_g * delta_mu)
+            ),
+          
+          modele = "Glicko-2"
+        )
+        
+        
+        # --------------------------------------------------
+        # ASSEMBLAGE DES COURBES
+        # --------------------------------------------------
+        
+        bind_rows(
+          courbe_elo,
+          courbe_glicko2
         )
       })
       
       
       # ====================================================
-      # GRAPHIQUE
+      # 5. SÉLECTION DES COURBES
       # ====================================================
       
-      output$graphique_probabilite <- renderPlot({
+      courbes_a_afficher <- reactive({
+        
+        courbes <- courbes_theoriques()
+        
+        if (input$modele == "elo") {
+          
+          courbes %>%
+            filter(
+              modele == "Elo classique"
+            )
+          
+        } else if (input$modele == "glicko2") {
+          
+          courbes %>%
+            filter(
+              modele == "Glicko-2"
+            )
+          
+        } else {
+          
+          courbes
+          
+        }
+      })
+      
+      
+      # ====================================================
+      # 6. GRAPHIQUE
+      # ====================================================
+      
+      output$graphique_probabilite <- renderPlotly({
         
         empirique <- donnees_empiriques()
         
-        theorique <- courbe_theorique()
-        
+        theorique <- courbes_a_afficher()
         
         # --------------------------------------------------
-        # Graphique
+        # CONSTRUCTION DU GRAPHIQUE GGPLOT
         # --------------------------------------------------
         
-        ggplot() +
+        graphique <- ggplot() +
           
           # ================================================
-        # COURBE THÉORIQUE
+        # COURBES THÉORIQUES
         # ================================================
         
         geom_line(
-          
           data = theorique,
           
           aes(
             x = difference_elo,
-            y = probabilite,
-            color = "Modèle Elo théorique"
+            y = score_attendu,
+            color = modele
           ),
           
           linewidth = 1.4
         ) +
-          
           
           # ================================================
         # COURBE EMPIRIQUE
         # ================================================
         
         geom_line(
-          
           data = empirique,
           
           aes(
             x = centre,
-            y = probabilite,
+            y = score_observe,
             color = "Données observées"
           ),
           
-          linewidth = 1.3
+          linewidth = 1.2
         ) +
-          
           
           # ================================================
         # POINTS EMPIRIQUES
         # ================================================
         
         geom_point(
-          
           data = empirique,
           
           aes(
             x = centre,
-            y = probabilite,
-            color = "Données observées",
-            
-            size = parties_decisives
+            y = score_observe,
+            size = nombre_parties,
+            text = texte_survol
           ),
+          
+          color = "#C0392B",
           
           alpha = 0.9
         ) +
-          
           
           # ================================================
         # AXE X
@@ -352,16 +422,13 @@ mod_probabilite_elo_server <- function(id) {
           
           limits = c(
             0,
-            max(
-              theorique$difference_elo
-            )
+            max(courbes_theoriques()$difference_elo)
           ),
           
           expand = expansion(
             mult = c(0, 0.02)
           )
         ) +
-          
           
           # ================================================
         # AXE Y
@@ -373,18 +440,14 @@ mod_probabilite_elo_server <- function(id) {
             accuracy = 1
           ),
           
-          limits = c(
-            0.45,
-            1
-          ),
+          limits = c(0, 1),
           
           breaks = seq(
-            0.5,
+            0,
             1,
             by = 0.1
           )
         ) +
-          
           
           # ================================================
         # COULEURS
@@ -393,15 +456,13 @@ mod_probabilite_elo_server <- function(id) {
         scale_color_manual(
           
           values = c(
-            
-            "Modèle Elo théorique" = "#888888",
-            
+            "Elo classique" = "#888888",
+            "Glicko-2" = "#2471A3",
             "Données observées" = "#C0392B"
           ),
           
-          name = NULL
+          name = "Modèle"
         ) +
-          
           
           # ================================================
         # TAILLE DES POINTS
@@ -409,18 +470,19 @@ mod_probabilite_elo_server <- function(id) {
         
         scale_size_continuous(
           
-          range = c(
-            2,
-            7
-          ),
+          range = c(2, 7),
           
-          name = "Parties décisives",
+          name = "Nombre de parties",
           
           labels = scales::label_number(
             big.mark = " "
           )
         ) +
           
+          # Suppression de la légende des tailles
+          guides(
+            size = "none"
+          ) +
           
           # ================================================
         # TITRES
@@ -429,25 +491,26 @@ mod_probabilite_elo_server <- function(id) {
         labs(
           
           title =
-            "Probabilité de victoire selon la différence d'Elo",
+            "Score attendu selon la différence de classement",
           
           subtitle =
-            "Le joueur le mieux classé est-il aussi souvent favori que le prédit le modèle Elo ?",
+            paste(
+              "Comparaison des modèles théoriques",
+              "et des résultats observés sur Lichess"
+            ),
           
           x =
-            "Différence d'Elo entre les joueurs",
+            "Différence de classement entre les joueurs",
           
           y =
-            "Probabilité de victoire du joueur le mieux classé"
+            "Score moyen du joueur le mieux classé"
         ) +
-          
           
           # ================================================
         # THÈME
         # ================================================
         
         theme_minimal(
-          
           base_size = 14
         ) +
           
@@ -468,19 +531,17 @@ mod_probabilite_elo_server <- function(id) {
             
             plot.title =
               element_text(
-                size = 21,
+                size = 19,
                 face = "bold",
                 hjust = 0.5
               ),
             
             plot.subtitle =
               element_text(
-                size = 13,
+                size = 12,
                 color = "#666666",
                 hjust = 0.5,
-                margin = margin(
-                  b = 20
-                )
+                margin = margin(b = 20)
               ),
             
             axis.title =
@@ -489,16 +550,19 @@ mod_probabilite_elo_server <- function(id) {
               ),
             
             legend.position =
-              "bottom",
-            
-            legend.text =
-              element_text(
-                size = 11
-              )
+              "bottom"
           )
         
+        # --------------------------------------------------
+        # CONVERSION EN GRAPHIQUE PLOTLY
+        # --------------------------------------------------
+        
+        ggplotly(
+          graphique,
+          tooltip = "text"
+        )
+        
       })
-      
     }
   )
 }
