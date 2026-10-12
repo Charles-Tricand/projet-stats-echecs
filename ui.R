@@ -77,6 +77,7 @@ fluidPage(
         widths = c(2, 10),          # 2 colonnes pour le menu, 10 pour le contenu
         well = FALSE,  
         mod_issue_parties_ui("issue_parties_tab"),
+        mod_taux_victoires_ui("taux_victoires_tab"),
         mod_elo_victory_ui("elo_victory_tab"),
         mod_nb_coups_ui("nb_coups_tab"),
         mod_openings_quadrant_ui("openings_quadrant_tab")
