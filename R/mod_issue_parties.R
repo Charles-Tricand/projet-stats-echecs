@@ -1,59 +1,110 @@
 # ==========================================================
+# MODULE : Issue des parties
+# Histogramme empilé : nombre de parties par issue selon la
+# différence d'Elo absolue entre les deux joueurs.
+# ==========================================================
+
+NB_CLASSES_ELO <- 20
+ELO_DIFF_MAX   <- 550   # parties au-delà de cet écart exclues
+
+LIBELLES_ISSUES <- c(
+  mate     = "Échec et mat",
+  resign   = "Abandon",
+  outoftime = "Temps écoulé",
+  draw     = "Nulle"
+)
+
+COULEURS_ISSUES <- setNames(
+  c("#1565C0", "#E69F00", "#009E73", "#9E9E9E"),
+  LIBELLES_ISSUES
+)
+
+
+# ==========================================================
+# PRÉPARATION DES DONNÉES
+# (indépendante de l'interface : calculée une seule fois)
+# ==========================================================
+
+preparer_issues <- function(donnees, nb_classes = NB_CLASSES_ELO) {
+
+  donnees <- donnees %>%
+    transmute(
+      elo_diff_abs,
+      issue = factor(
+        unname(LIBELLES_ISSUES[victory_status]),
+        levels = LIBELLES_ISSUES
+      )
+    ) %>%
+    filter(!is.na(elo_diff_abs), !is.na(issue), elo_diff_abs <= ELO_DIFF_MAX)
+
+  # Bornes arrondies et uniques, de 0 à ELO_DIFF_MAX
+  bornes <- unique(
+    round(seq(0, ELO_DIFF_MAX, length.out = nb_classes + 1))
+  )
+
+  # Libellés « début–fin » (la dernière classe inclut sa borne haute)
+  debuts  <- head(bornes, -1)
+  fins    <- tail(bornes, -1) - 1
+  fins[length(fins)] <- tail(bornes, 1)
+  libelles <- paste0(debuts, "–", fins)
+  milieux  <- (head(bornes, -1) + tail(bornes, -1)) / 2
+
+  donnees %>%
+    mutate(
+      classe_elo = cut(
+        elo_diff_abs,
+        breaks         = bornes,
+        labels         = libelles,
+        right          = FALSE,
+        include.lowest = TRUE
+      )
+    ) %>%
+    count(classe_elo, issue, name = "nombre_parties", .drop = FALSE) %>%
+    group_by(classe_elo) %>%
+    mutate(
+      # Milieu de la classe : abscisse du point dans l'aire empilée
+      milieu_elo    = milieux[as.integer(classe_elo)],
+      total_parties = sum(nombre_parties),
+      proportion    = if_else(total_parties > 0, nombre_parties / total_parties, 0)
+    ) %>%
+    ungroup() %>%
+    mutate(
+      tooltip = paste0(
+        "<b>Différence d'Elo :</b> ", classe_elo,
+        "<br><b>Issue :</b> ", issue,
+        "<br><br><b>Nombre de parties :</b> ",
+        format(nombre_parties, big.mark = " "),
+        "<br><b>Part de la classe :</b> ",
+        scales::percent(proportion, accuracy = 0.1),
+        "<br><b>Total dans la classe :</b> ",
+        format(total_parties, big.mark = " ")
+      )
+    )
+}
+
+
+# ==========================================================
 # 1. INTERFACE UTILISATEUR
 # ==========================================================
 
 mod_issue_parties_ui <- function(id) {
-  
+
   ns <- NS(id)
-  
+
   tabPanel(
-    
     "Issue des parties",
-    
-    h2(
-      "Comment les parties se terminent-elles ?"
-    ),
-    
-    p(
-      "Analyse de l'issue des parties selon la différence d'Elo entre les deux joueurs."
-    ),
-    
-    sidebarLayout(
-      
-      sidebarPanel(
-        
-        sliderInput(
-          
-          ns("nombre_classes"),
-          
-          label = "Nombre de classes de différence d'Elo :",
-          
-          min = 4,
-          
-          max = 20,
-          
-          value = 10,
-          
-          step = 1
-        ),
-        
-        hr(),
-        
-        helpText(
-          "Les parties sont réparties automatiquement entre 0 et la différence d'Elo maximale observée."
-        )
-        
-      ),
-      
-      mainPanel(
-        
-        plotlyOutput(
-          
-          ns("graphique_issue"),
-          
-          height = "650px"
-        )
-        
+
+    h2("Comment les parties se terminent-elles ?"),
+
+    p("Analyse de l'issue des parties selon la différence d'Elo entre les deux joueurs."),
+
+    plotlyOutput(ns("graphique_issue"), height = "650px"),
+
+    helpText(
+      sprintf(
+        "Les parties sont réparties en %d classes de même largeur, entre 0 et %d points d'écart d'Elo.",
+        NB_CLASSES_ELO,
+        ELO_DIFF_MAX
       )
     )
   )
@@ -65,438 +116,52 @@ mod_issue_parties_ui <- function(id) {
 # ==========================================================
 
 mod_issue_parties_server <- function(id) {
-  
-  moduleServer(
-    
-    id,
-    
-    function(input, output, session) {
-      
-      # ====================================================
-      # DONNÉES
-      # ====================================================
-      
-      donnees <- reactive({
-        
-        Donnees_Chess %>%
-          
-          mutate(
-            
-            issue = case_when(
-              
-              victory_status == "mate" ~
-                "Échec et mat",
-              
-              victory_status == "resign" ~
-                "Abandon",
-              
-              victory_status == "outoftime" ~
-                "Temps écoulé",
-              
-              victory_status == "draw" ~
-                "Nulle",
-              
-              TRUE ~ NA_character_
+
+  moduleServer(id, function(input, output, session) {
+
+    # Les classes sont fixes : pas besoin de reactive()
+    resume <- preparer_issues(Donnees_Chess)
+
+    output$graphique_issue <- renderPlotly({
+
+      if (nrow(resume) == 0) {
+        return(plot_ly() %>% layout(title = "Aucune donnée disponible"))
+      }
+
+      plot_ly(
+        data       = resume,
+        x          = ~milieu_elo,
+        y          = ~nombre_parties,
+        color      = ~issue,
+        colors     = COULEURS_ISSUES,
+        type       = "scatter",
+        mode       = "lines+markers",
+        stackgroup = "one",            # aires empilées et continues
+        groupnorm  = "percent",
+        line       = list(width = 1),
+        marker     = list(size = 5),
+        hovertext  = ~tooltip,
+        hoverinfo  = "text"
+      ) %>%
+        layout(
+          title   = list(
+            text = paste0(
+              "<b>Comment les parties se terminent-elles ?</b>",
+              "<br><sup>Nombre de parties par issue selon la différence d'Elo entre les joueurs</sup>"
             )
-          ) %>%
-          
-          filter(
-            !is.na(elo_diff_abs),
-            !is.na(issue)
-          )
-      })
-      
-      
-      # ====================================================
-      # CALCUL DES CLASSES
-      # ====================================================
-      
-      donnees_classes <- reactive({
-        
-        data <- donnees()
-        
-        nombre_classes <- input$nombre_classes
-        
-        # --------------------------------------------------
-        # Maximum de différence d'Elo
-        # --------------------------------------------------
-        
-        max_diff <- max(
-          data$elo_diff_abs,
-          na.rm = TRUE
-        )
-        
-        # --------------------------------------------------
-        # Bornes
-        # --------------------------------------------------
-        
-        bornes <- seq(
-          0,
-          max_diff,
-          length.out = nombre_classes + 1
-        )
-        
-        # On arrondit les bornes pour avoir
-        # des valeurs plus lisibles
-        
-        bornes <- round(
-          bornes
-        )
-        
-        # Évite d'avoir deux bornes identiques
-        # après l'arrondi
-        
-        bornes <- unique(bornes)
-        
-        # --------------------------------------------------
-        # Création des classes
-        # --------------------------------------------------
-        
-        data %>%
-          
-          mutate(
-            
-            classe_elo = cut(
-              
-              elo_diff_abs,
-              
-              breaks = bornes,
-              
-              right = FALSE,
-              
-              include.lowest = TRUE
-            )
-          )
-      })
-      
-      
-      # ====================================================
-      # RÉSUMÉ
-      # ====================================================
-      
-      resume <- reactive({
-        
-        data <- donnees_classes()
-        
-        # --------------------------------------------------
-        # Nombre total de parties par classe
-        # --------------------------------------------------
-        
-        totaux <- data %>%
-          
-          count(
-            classe_elo,
-            name = "total_parties"
-          )
-        
-        # --------------------------------------------------
-        # Nombre de parties par issue
-        # --------------------------------------------------
-        
-        data %>%
-          
-          count(
-            classe_elo,
-            issue,
-            name = "nombre_parties"
-          ) %>%
-          
-          left_join(
-            totaux,
-            by = "classe_elo"
-          ) %>%
-          
-          mutate(
-            
-            proportion =
-              nombre_parties / total_parties
-          ) %>%
-          
-          # ------------------------------------------------
-        # On s'assure que toutes les issues existent
-        # dans chaque classe
-        # ------------------------------------------------
-        
-        complete(
-          
-          classe_elo,
-          
-          issue = c(
-            "Échec et mat",
-            "Abandon",
-            "Temps écoulé",
-            "Nulle"
           ),
-          
-          fill = list(
-            nombre_parties = 0,
-            proportion = 0
+          xaxis = list(
+            title    = "Différence d'Elo entre les deux joueurs",
+            rangemode = "tozero"
+          ),
+          yaxis = list(title = "Part des parties", ticksuffix = " %"),
+          legend = list(title = list(text = "<b>Issue</b>")),
+          hoverlabel = list(
+            bgcolor     = "white",
+            bordercolor = "#333333",
+            font        = list(color = "#222222", size = 13)
           )
-        ) %>%
-          
-          # Recalcul après complete()
-          
-          group_by(
-            classe_elo
-          ) %>%
-          
-          mutate(
-            
-            total_parties =
-              sum(nombre_parties),
-            
-            proportion =
-              nombre_parties / total_parties
-          ) %>%
-          
-          ungroup()
-      })
-      
-      
-      # ====================================================
-      # HEATMAP
-      # ====================================================
-      
-      output$graphique_issue <- renderPlotly({
-        
-        data <- resume()
-        
-        if (nrow(data) == 0) {
-          
-          return(
-            plot_ly() %>%
-              layout(
-                title = "Aucune donnée disponible"
-              )
-          )
-        }
-        
-        # --------------------------------------------------
-        # Ordre des issues
-        # --------------------------------------------------
-        
-        data <- data %>%
-          
-          mutate(
-            
-            issue = factor(
-              
-              issue,
-              
-              levels = c(
-                "Échec et mat",
-                "Abandon",
-                "Temps écoulé",
-                "Nulle"
-              )
-            )
-          )
-        
-        
-        # --------------------------------------------------
-        # Pourcentage affiché
-        # --------------------------------------------------
-        
-        data <- data %>%
-          
-          mutate(
-            
-            pourcentage =
-              paste0(
-                round(proportion * 100, 1),
-                "%"
-              )
-          )
-        
-        
-        # --------------------------------------------------
-        # Texte du tooltip
-        # --------------------------------------------------
-        
-        data <- data %>%
-          
-          mutate(
-            
-            tooltip = paste0(
-              
-              "<b>Différence d'Elo :</b> ",
-              classe_elo,
-              
-              "<br>",
-              
-              "<b>Issue :</b> ",
-              issue,
-              
-              "<br><br>",
-              
-              "<b>Proportion :</b> ",
-              pourcentage,
-              
-              "<br>",
-              
-              "<b>Nombre de parties :</b> ",
-              scales::comma(
-                nombre_parties,
-                big.mark = " "
-              ),
-              
-              "<br>",
-              
-              "<b>Total dans la classe :</b> ",
-              scales::comma(
-                total_parties,
-                big.mark = " "
-              )
-            )
-          )
-        
-        
-        # --------------------------------------------------
-        # Heatmap
-        # --------------------------------------------------
-        
-        graphique <- ggplot(
-          
-          data,
-          
-          aes(
-            x = issue,
-            y = classe_elo,
-            fill = proportion,
-            
-            text = tooltip
-          )
-        ) +
-          
-          geom_tile(
-            
-            color = "white",
-            
-            linewidth = 1
-          ) +
-          
-          geom_text(
-            
-            aes(
-              label = pourcentage
-            ),
-            
-            color = "#222222",
-            
-            fontface = "bold",
-            
-            size = 4
-          ) +
-          
-          scale_fill_gradient(
-            
-            low = "#F4F7F9",
-            
-            high = "#1565C0",
-            
-            labels = scales::label_percent(
-              accuracy = 1
-            ),
-            
-            name = "Proportion"
-          ) +
-          
-          labs(
-            
-            title =
-              "Comment les parties se terminent-elles ?",
-            
-            subtitle =
-              "Proportion de chaque issue selon la différence d'Elo entre les joueurs",
-            
-            x = NULL,
-            
-            y = "Différence d'Elo"
-          ) +
-          
-          theme_minimal(
-            
-            base_size = 14
-          ) +
-          
-          theme(
-            
-            panel.grid = element_blank(),
-            
-            axis.text.x = element_text(
-              
-              face = "bold",
-              
-              size = 12
-            ),
-            
-            axis.text.y = element_text(
-              
-              size = 11
-            ),
-            
-            axis.title.y = element_text(
-              
-              face = "bold",
-              
-              margin = margin(
-                r = 10
-              )
-            ),
-            
-            plot.title = element_text(
-              
-              size = 21,
-              
-              face = "bold",
-              
-              hjust = 0.5
-            ),
-            
-            plot.subtitle = element_text(
-              
-              size = 13,
-              
-              color = "#666666",
-              
-              hjust = 0.5,
-              
-              margin = margin(
-                b = 20
-              )
-            ),
-            
-            legend.position = "right"
-          )
-        
-        
-        # --------------------------------------------------
-        # Conversion Plotly
-        # --------------------------------------------------
-        
-        ggplotly(
-          
-          graphique,
-          
-          tooltip = "text"
-        ) %>%
-          
-          layout(
-            
-            hoverlabel = list(
-              
-              bgcolor = "white",
-              
-              bordercolor = "#333333",
-              
-              font = list(
-                color = "#222222",
-                size = 13
-              )
-            )
-          )
-      })
-      
-    }
-  )
+        )
+    })
+  })
 }
