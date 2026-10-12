@@ -41,9 +41,6 @@ mod_openings_elo_server <- function(id) {
         y=~proportion,
         type="bar",
         marker=list(color="black",line=list(width=0)),
-        text=~opening_name,
-        textposition="inside",
-        insidetextfont=list(color="white",size=10),
         hovertemplate=paste0(
           "<b>%{x}</b><br>",
           "Proportion : %{y:.2%}",

@@ -45,7 +45,10 @@ fluidPage(
     
     tabPanel(
       "Statistiques Descriptives de base",
-      tabsetPanel(
+      navlistPanel(
+        id = "nav_stats_base",
+        widths = c(2, 10),          # 2 colonnes pour le menu, 10 pour le contenu
+        well = FALSE,  
         mod_elo_victory_ui("elo_victory_tab"),
         mod_nb_coups_ui("nb_coups_tab"),
         mod_issue_parties_ui("issue_parties_tab"),

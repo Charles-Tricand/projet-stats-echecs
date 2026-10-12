@@ -117,7 +117,7 @@ mod_openings_quadrant_server <- function(id) {
         ) +
         
         # Nom de l'ouverture
-        geom_label_repel(
+        geom_text_repel(
           aes(label = opening_name),
           size = 3.1,
           color = "black",
