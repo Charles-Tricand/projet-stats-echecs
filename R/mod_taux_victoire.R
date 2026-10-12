@@ -94,14 +94,11 @@ mod_taux_victoires_ui <- function(id) {
   ns <- NS(id)
   
   tabPanel(
-    "Taux de victoire",
+    "Taux de victoire selon la couleur",
+    h2("Est ce que la couleur offre un avantage à un joueur ?"),
     
-    h2("Comment se terminent les parties ?"),
-    
-    p(
-      "Proportion des victoires des Blancs, des victoires des Noirs ",
-      "et des matchs nuls selon la différence d'Elo."
-    ),
+    p("Proportion des victoires des Blancs, des victoires des Noirs ",
+      "et des matchs nuls selon la différence d'Elo."),
     
     plotlyOutput(ns("graphique_taux"), height = "650px")
   )
@@ -115,11 +112,8 @@ mod_taux_victoires_ui <- function(id) {
 mod_taux_victoires_server <- function(id) {
   
   moduleServer(id, function(input, output, session) {
-    
     resume <- preparer_taux_victoires(Donnees_Chess)
-    
     output$graphique_taux <- renderPlotly({
-      
       if (nrow(resume) == 0) {
         return(plot_ly() %>% layout(title = "Aucune donnée disponible"))
       }
