@@ -15,6 +15,7 @@ server <- function(input, output, session) {
   mod_echiquier_interactif_server("echiquier_interactif_tab")
   mod_probabilite_elo_server("probabilite_elo_tab")
   mod_guide_echecs_server("guide_echecs_tab")
+  mod_taux_victoires_server("taux_victoires_tab")
   
   observeEvent(input$lien_accueil, {
     updateTabsetPanel(session, "onglets_principaux", selected = "accueil")
