@@ -34,8 +34,9 @@ Donnees_Chess = Donnees_Chess |>
         floor(white_rating / 100) * 100 + 99
       )
     )
-  )
+  ) |> 
+  filter(elo_diff_abs<600)
 
-source("Modele.R")
+#source("Modele.R")
 
 lapply(list.files(path="R", pattern="\\.R$", full.names=TRUE), source)

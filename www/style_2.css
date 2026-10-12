@@ -454,3 +454,38 @@ hr {
 .guide-echecs .guide-section p {
   line-height: 1.7;
 }
+
+/* Le bouton "Accueil" n'apparaît pas dans la barre d'onglets */
+#onglets_principaux > .nav > li:has(> a[data-value="accueil"]) {
+  display: none;
+}
+
+/* Le titre se comporte comme un lien discret */
+.titre-accueil,
+.titre-accueil:hover,
+.titre-accueil:focus {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Mise en page de l'accueil (à adapter) */
+.page-accueil {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;   /* centrage vertical */
+  align-items: center;       /* centrage horizontal */
+  text-align: center;        /* centre le texte s'il passe sur plusieurs lignes */
+  min-height: 70vh;          /* hauteur de la zone dans laquelle on centre */
+  gap: 24px;                 /* espace entre le titre et le sous-titre */
+}
+
+.page-accueil h1 {
+  margin: 0;                 /* évite que les marges par défaut décalent le centrage */
+}
+
+.sous-titre-accueil {
+  margin: 0;
+  font-size: 1.3em;
+  color: #7F8C8D;
+}

@@ -5,7 +5,7 @@ mod_openings_elo_ui <- function(id) {
     "Ouvertures selon Elo",
     fluidRow(
       column(6,selectInput(ns("elo"),"Tranche Elo :",choices=elo_levels,selected="1500-1599")),
-      column(6,sliderInput(ns("nb_openings"),"Nombre d'ouvertures à afficher :",min=1,max=20,value=3,step=1))
+      column(6,sliderInput(ns("nb_openings"),"Nombre d'ouvertures à afficher :",min=1,max=20,value=15,step=1))
     ),
     br(),
     plotlyOutput(ns("top_openings"),height="600px")

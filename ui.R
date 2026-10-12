@@ -39,9 +39,34 @@ fluidPage(
     )
   ),
   
-  titlePanel("Jeu d'échecs"),
+  titlePanel(
+    title = actionLink(
+      inputId = "lien_accueil",
+      label = "Jeu d'échecs",
+      class = "titre-accueil"
+    ),
+    windowTitle = "Jeu d'échecs"   # nécessaire car le titre n'est plus un simple texte
+  ),
   
   tabsetPanel(
+    
+    id = "onglets_principaux",
+    selected = "accueil",          # l'appli s'ouvre sur l'accueil
+    
+    tabPanel(
+      "Accueil",
+      value = "accueil",
+      h1("Initiation aux statistiques sur les echecs"),
+      p(class = "sous-titre-accueil", "Comment l’opening, l’elo et la couleur déterminent le déroulement et l’issue d’une partie d'echec ?")
+    ),
+    
+    tabPanel(
+      "Apprendre les échecs",
+      tabsetPanel(
+        mod_guide_echecs_ui("guide_echecs_tab"),
+        mod_echiquier_interactif_ui("echiquier_interactif_tab")
+      )
+    ),
     
     tabPanel(
       "Statistiques Descriptives de base",
@@ -49,30 +74,27 @@ fluidPage(
         id = "nav_stats_base",
         widths = c(2, 10),          # 2 colonnes pour le menu, 10 pour le contenu
         well = FALSE,  
+        mod_issue_parties_ui("issue_parties_tab"),
         mod_elo_victory_ui("elo_victory_tab"),
         mod_nb_coups_ui("nb_coups_tab"),
-        mod_issue_parties_ui("issue_parties_tab"),
-        mod_diff_elo_max_ui("diff_elo_max_tab"),
-        mod_calculateur_ui("calculateur_tab"),
         mod_openings_elo_ui("openings_elo_tab"),
-        mod_openings_quadrant_ui("openings_quadrant_tab"),
-        mod_echiquier_interactif_ui("echiquier_interactif_tab"),
-        mod_probabilite_elo_ui("probabilite_elo_tab")
+        mod_openings_quadrant_ui("openings_quadrant_tab")
       )
     ),
     
     tabPanel(
-      "Statistiques de plus haut niveau",
-      h2("Statistiques de plus haut niveau")
+      "Pour aller plus loin",
+      h2("Pour aller plus loin"),
+      navlistPanel(
+        widths = c(2, 10),  
+        mod_probabilite_elo_ui("probabilite_elo_tab"),
+        mod_calculateur_ui("calculateur_tab"),
+      )
     ),
     
     tabPanel(
       "Autres résultats",
       h2("Autres résultats")
-    ),
-    tabPanel(
-      "Apprendre les échecs",
-      mod_guide_echecs_ui("guide_echecs_tab")
     )
   )
 )

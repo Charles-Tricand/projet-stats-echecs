@@ -12,16 +12,10 @@ mod_probabilite_elo_ui <- function(id) {
   ns <- NS(id)
   
   tabPanel(
-    
     "Probabilité de victoire",
+    h2("L'Elo prédit-il réellement le résultat ?"),
     
-    h2(
-      "L'Elo prédit-il réellement le résultat ?"
-    ),
-    
-    p(
-      "texteeeeeeeeeeeeeeeeeeeeeeeee"
-    ),
+    p("texteeeeeeeeeeeeeeeeeeeeeeeee"),
     
     sidebarLayout(
       
@@ -326,21 +320,14 @@ mod_probabilite_elo_server <- function(id) {
         courbes <- courbes_theoriques()
         
         if (input$modele == "elo") {
-          
           courbes %>%
-            filter(
-              modele == "Elo classique"
-            )
+            filter(modele == "Elo classique")
           
         } else if (input$modele == "glicko2") {
-          
           courbes %>%
-            filter(
-              modele == "Glicko-2"
-            )
+            filter(modele == "Glicko-2")
           
         } else {
-          
           courbes
           
         }

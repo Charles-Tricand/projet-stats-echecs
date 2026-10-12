@@ -5,7 +5,6 @@
 # ==========================================================
 
 NB_CLASSES_ELO <- 20
-ELO_DIFF_MAX   <- 550   # parties au-delà de cet écart exclues
 
 LIBELLES_ISSUES <- c(
   mate     = "Échec et mat",
@@ -35,11 +34,11 @@ preparer_issues <- function(donnees, nb_classes = NB_CLASSES_ELO) {
         levels = LIBELLES_ISSUES
       )
     ) %>%
-    filter(!is.na(elo_diff_abs), !is.na(issue), elo_diff_abs <= ELO_DIFF_MAX)
+    filter(!is.na(elo_diff_abs), !is.na(issue))
 
-  # Bornes arrondies et uniques, de 0 à ELO_DIFF_MAX
+  # Bornes arrondies et uniques, de 0 à la différence maximale observée
   bornes <- unique(
-    round(seq(0, ELO_DIFF_MAX, length.out = nb_classes + 1))
+    round(seq(0, ceiling(max(donnees$elo_diff_abs)), length.out = nb_classes + 1))
   )
 
   # Libellés « début–fin » (la dernière classe inclut sa borne haute)
@@ -102,9 +101,8 @@ mod_issue_parties_ui <- function(id) {
 
     helpText(
       sprintf(
-        "Les parties sont réparties en %d classes de même largeur, entre 0 et %d points d'écart d'Elo.",
-        NB_CLASSES_ELO,
-        ELO_DIFF_MAX
+        "Les parties sont réparties en %d classes de même largeur, entre 0 et la différence d'Elo maximale observée.",
+        NB_CLASSES_ELO
       )
     )
   )
@@ -137,7 +135,7 @@ mod_issue_parties_server <- function(id) {
         type       = "scatter",
         mode       = "lines+markers",
         stackgroup = "one",            # aires empilées et continues
-        groupnorm  = "percent",
+        groupnorm  = "percent",        # chaque classe totalise 100 %
         line       = list(width = 1),
         marker     = list(size = 5),
         hovertext  = ~tooltip,
@@ -147,14 +145,19 @@ mod_issue_parties_server <- function(id) {
           title   = list(
             text = paste0(
               "<b>Comment les parties se terminent-elles ?</b>",
-              "<br><sup>Nombre de parties par issue selon la différence d'Elo entre les joueurs</sup>"
+              "<br><sup>Part de chaque issue selon la différence d'Elo entre les joueurs</sup>"
             )
           ),
           xaxis = list(
-            title    = "Différence d'Elo entre les deux joueurs",
+            title     = "Différence d'Elo entre les deux joueurs",
             rangemode = "tozero"
           ),
-          yaxis = list(title = "Part des parties", ticksuffix = " %"),
+          yaxis = list(
+            title      = "Part des parties",
+            ticksuffix = " %",
+            range      = c(0, 100)
+          ),
+          margin = list(t = 110),   # espace entre le sous-titre et le graphique
           legend = list(title = list(text = "<b>Issue</b>")),
           hoverlabel = list(
             bgcolor     = "white",
