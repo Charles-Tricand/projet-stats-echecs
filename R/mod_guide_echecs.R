@@ -257,25 +257,7 @@ mod_guide_echecs_server <- function(id) {
             texte = c(
               "Le système Elo classique repose sur la comparaison entre le résultat attendu d'une partie et son résultat réel.",
               
-              "Avant une partie, le classement des deux joueurs permet d'estimer leur score attendu.",
-              
-              HTML(
-                "La différence de classement entre les deux joueurs est notée \\(D\\) :"
-              ),
-              
-              "\\[ D = R_A - R_B \\]",
-              
-              "Le score attendu du joueur \\(A\\) se calcule avec la formule :",
-               
-              "\\[ E_A = \\frac{1}{1 + 10^{-D/400}} \\]",
-              
-              "Après la partie, le classement est actualisé selon la formule :",
-              
-              "\\[ R'_A = R_A + K(S_A - E_A) \\]",
-              
-              HTML(
-                "où \\(K\\) détermine l'ampleur de la variation, \\(S_A\\) est le résultat réel et \\(E_A\\) le score attendu."
-              )
+              "Avant une partie, le classement des deux joueurs permet d'estimer leur score attendu."
             )
           ),
           
@@ -284,21 +266,9 @@ mod_guide_echecs_server <- function(id) {
             
             texte = c(
               "La différence de classement entre deux joueurs contribue à l'estimation du score attendu avant une partie.
-                    Aux échecs, une partie peut se terminer par une victoire, une défaite ou une nulle. Le score attendu correspond à la probabilité de victoire à laquelle on ajoute la moitié de la probabilité de nulle.",
-              
-              "Avec Glicko-2, le score attendu dépend également de l'incertitude associée au classement des adversaires.",
-              
-              "Le facteur qui tient compte de l'incertitude de l'adversaire est :",
-              
-              "\\[ g(\\phi_B) = \\frac{1}{\\sqrt{1 + \\frac{3\\phi_B^2}{\\pi^2}}} \\]",
-              
-              HTML(
-                "Le score attendu du joueur \\(A\\) est alors :"
-              ),
-              
-              "\\[ E_A = \\frac{1}{1 + \\exp[-g(\\phi_B)(\\mu_A - \\mu_B)]} \\]",
-              
-              "Dans notre application, le graphique de la page « Probabilité de victoire » permet de comparer les estimations théoriques aux résultats observés dans le jeu de données."
+              Aux échecs, une partie peut se terminer par une victoire, une défaite ou un nul. Le score attendu correspond à la probabilité de victoire à laquelle on ajoute la moitié de la probabilité de nulle.",
+              "Les données exploitées proviennent de la plateforme 'Lichess', qui utilise sa propre méthode de classement : 'Glicko-2'.",
+              "Avec Glicko-2, le score attendu dépend également de l'incertitude associée au classement des adversaires."
             )
           )
         )

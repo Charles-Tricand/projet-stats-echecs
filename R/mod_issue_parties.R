@@ -12,7 +12,6 @@ LIBELLES_ISSUES <- c(
   outoftime = "Temps écoulé",
   draw     = "Nulle"
 )
-
 COULEURS_ISSUES <- setNames(
   c("#1565C0", "#E69F00", "#009E73", "#9E9E9E"),
   LIBELLES_ISSUES
@@ -97,14 +96,7 @@ mod_issue_parties_ui <- function(id) {
 
     p("Analyse de l'issue des parties selon la différence d'Elo entre les deux joueurs."),
 
-    plotlyOutput(ns("graphique_issue"), height = "650px"),
-
-    helpText(
-      sprintf(
-        "Les parties sont réparties en %d classes de même largeur, entre 0 et la différence d'Elo maximale observée.",
-        NB_CLASSES_ELO
-      )
-    )
+    plotlyOutput(ns("graphique_issue"), height = "650px")
   )
 }
 
@@ -144,7 +136,6 @@ mod_issue_parties_server <- function(id) {
         layout(
           title   = list(
             text = paste0(
-              "<b>Comment les parties se terminent-elles ?</b>",
               "<br><sup>Part de chaque issue selon la différence d'Elo entre les joueurs</sup>"
             )
           ),

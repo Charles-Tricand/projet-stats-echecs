@@ -350,7 +350,7 @@ rendre_branches <- function(arbre, cle, ply_base, niveau = 1, profondeur_max = 3
 mod_echiquier_interactif_ui <- function(id) {
   ns <- NS(id)
   tabPanel(
-    "Echiquier ouvertures",
+    "Echiquier interactif",
     dep_echiquier_interactif(),
     tags$head(tags$style(HTML(css_echiquier_interactif))),
     h2("Echiquier interactif"),

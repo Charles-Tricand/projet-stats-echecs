@@ -15,8 +15,6 @@ mod_probabilite_elo_ui <- function(id) {
     "Probabilité de victoire",
     h2("L'Elo prédit-il réellement le résultat ?"),
     
-    p("texteeeeeeeeeeeeeeeeeeeeeeeee"),
-    
     sidebarLayout(
       
       sidebarPanel(

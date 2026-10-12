@@ -56,7 +56,7 @@ fluidPage(
     tabPanel(
       "Accueil",
       value = "accueil",
-      h1("Initiation aux statistiques sur les echecs"),
+      h1("Initiation aux statistiques sur les échecs"),
       p(class = "sous-titre-accueil", "Comment l’opening, l’elo et la couleur déterminent le déroulement et l’issue d’une partie d'echec ?")
     ),
     
@@ -77,7 +77,6 @@ fluidPage(
         mod_issue_parties_ui("issue_parties_tab"),
         mod_elo_victory_ui("elo_victory_tab"),
         mod_nb_coups_ui("nb_coups_tab"),
-        mod_openings_elo_ui("openings_elo_tab"),
         mod_openings_quadrant_ui("openings_quadrant_tab")
       )
     ),
